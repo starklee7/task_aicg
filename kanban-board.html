@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求协同看板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: rgba(55, 65, 81, 1.0);
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .container {
+            min-width: 1440px;
+            padding: 20px;
+            background: white;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #374151;
+            line-height: 26px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fa4b4b;
+            line-height: 22px;
+        }
+
+        .kanban-board {
+            display: flex;
+            gap: 0;
+            min-height: 714px;
+        }
+
+        .column {
+            flex: 1;
+            background: rgba(241, 245, 249, 1.0);
+            border: 1px solid rgba(216, 221, 230, 1.0);
+            border-radius: 8px;
+            min-width: 256px;
+            max-width: 256px;
+            height: 714px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .column:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .column-header {
+            background: rgba(241, 245, 249, 1.0);
+            border-bottom: 1px solid rgba(216, 221, 230, 1.0);
+            padding: 13px 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(55, 65, 81, 1.0);
+            line-height: 22px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .column-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: grab;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card.dragging {
+            opacity: 0.8;
+            transform: rotate(5deg);
+            cursor: grabbing;
+        }
+
+        .card-header {
+            background: white;
+            border-radius: 8px 8px 0 0;
+            padding: 10px 15px;
+            border-bottom: 1px solid #d8dde6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 400;
+            color: white;
+            line-height: 18px;
+        }
+
+        .status-tag.pending {
+            background: rgba(250, 75, 75, 1.0);
+        }
+
+        .status-tag.completed {
+            background: rgba(55, 65, 81, 1.0);
+        }
+
+        .project-id {
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+            line-height: 18px;
+        }
+
+        .card-body {
+            padding: 15px;
+            background: white;
+        }
+
+        .project-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            line-height: 22px;
+            margin-bottom: 15px;
+        }
+
+        .project-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            font-size: 12px;
+            color: #374151;
+            line-height: 18px;
+        }
+
+        .timestamps {
+            border-top: 1px solid #d8dde6;
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: rgba(104, 122, 153, 1.0);
+            line-height: 16px;
+        }
+
+        .card-footer {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            padding: 15px;
+            border-top: 1px solid #d8dde6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: rgba(31, 127, 255, 1.0);
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            padding: 0;
+            line-height: 22px;
+            transition: color 0.2s ease;
+        }
+
+        .action-btn:hover {
+            color: #0056cc;
+        }
+
+        .user-section {
+            background: white;
+            border-radius: 8px 8px 0 0;
+            padding: 15px;
+            border-bottom: 1px solid #d8dde6;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .avatar {
+            width: 58px;
+            height: 58px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .user-item {
+            font-size: 12px;
+            color: #374151;
+            line-height: 18px;
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: #d8dde6;
+            border-radius: 8px;
+        }
+
+        .progress-fill {
+            height: 8px;
+            background: #aab8c4;
+            border-radius: 8px;
+            width: 31.25%;
+            margin: 1px;
+        }
+
+        /* 拖拽状态样式 */
+        .column.drag-over {
+            background: #e5f3ff;
+            border-color: #1f7fff;
+        }
+
+        .card.drag-over {
+            border: 2px dashed #1f7fff;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .container {
+                min-width: 100%;
+                padding: 10px;
+            }
+            
+            .kanban-board {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .column {
+                min-width: auto;
+                border-radius: 8px !important;
+            }
+            
+            .column-content {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .user-section {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .card-footer {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .action-btn {
+                text-align: center;
+                padding: 8px;
+                background: #f8f9fa;
+                border-radius: 4px;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: #687a99;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d8dde6;
+            border-top: 2px solid #1f7fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">需求协同看板</h1>
+            <span class="subtitle">（拖拽卡片可变更状态）</span>
+        </div>
+
+        <div class="kanban-board" id="kanbanBoard">
+            <!-- 预售测试列 -->
+            <div class="column" data-column="presale">
+                <div class="column-header">预售测试(3)</div>
+                <div class="column-content" data-column="presale">
+                    <!-- 卡片将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 待交付列 -->
+            <div class="column" data-column="pending">
+                <div class="column-header">待交付(1)</div>
+                <div class="column-content" data-column="pending">
+                    <!-- 卡片将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 已复盘列 -->
+            <div class="column" data-column="completed">
+                <div class="column-header">已复盘(5)</div>
+                <div class="column-content" data-column="completed">
+                    <!-- 卡片将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        // 项目数据
+        const projectData = [
+            {
+                id: 'PRJ001',
+                title: '项目名称文本演示',
+                status: 'presale',
+                statusText: '预售测试',
+                statusColor: 'pending',
+                projectId: '项目ID：年月日+系统随机数',
+                targetAudience: '目标人群：20～30岁女性',
+                category: '品类：牛仔裤',
+                priceRange: '价位带：¥99～¥199',
+                designHighlights: '设计亮点：设计亮点文本演示',
+                marketData: '市场数据：市场数据文本演示',
+                improvements: '问题改进：问题改进文本演示',
+                designer: '设计师：设计师姓名',
+                client: '客户：客户姓名',
+                operator: '运营：运营姓名',
+                createdAt: '2025-08-24 16:30:56',
+                updatedAt: '2025-08-24 16:30:56',
+                avatar: '👨‍🎨'
+            },
+            {
+                id: 'PRJ002',
+                title: '项目名称文本演示',
+                status: 'pending',
+                statusText: '待交付',
+                statusColor: 'pending',
+                projectId: '项目ID：年月日+系统随机数',
+                targetAudience: '目标人群：20～30岁女性',
+                category: '品类：牛仔裤',
+                priceRange: '价位带：¥99～¥199',
+                designHighlights: '设计亮点：设计亮点文本演示',
+                marketData: '市场数据：市场数据文本演示',
+                improvements: '问题改进：问题改进文本演示',
+                designer: '设计师：设计师姓名',
+                client: '客户：客户姓名',
+                operator: '运营：运营姓名',
+                createdAt: '2025-08-24 16:30:56',
+                updatedAt: '2025-08-24 16:30:56',
+                avatar: '👩‍💼'
+            },
+            {
+                id: 'PRJ003',
+                title: '项目名称文本演示',
+                status: 'completed',
+                statusText: '已复盘',
+                statusColor: 'completed',
+                projectId: '项目ID：年月日+系统随机数',
+                targetAudience: '目标人群：20～30岁女性',
+                category: '品类：牛仔裤',
+                priceRange: '价位带：¥99～¥199',
+                designHighlights: '设计亮点：设计亮点文本演示',
+                marketData: '市场数据：市场数据文本演示',
+                improvements: '问题改进：问题改进文本演示',
+                designer: '设计师：设计师姓名',
+                client: '客户：客户姓名',
+                operator: '运营：运营姓名',
+                createdAt: '2025-08-24 16:30:56',
+                updatedAt: '2025-08-24 16:30:56',
+                avatar: '👨‍💻'
+            }
+        ];
+
+        // 创建卡片元素
+        function createCard(project) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.projectId = project.id;
+            card.dataset.status = project.status;
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="status-tag ${project.statusColor}">${project.statusText}</span>
+                    <span class="project-id">${project.projectId}</span>
+                </div>
+                <div class="user-section">
+                    <div class="avatar">${project.avatar}</div>
+                    <div class="user-info">
+                        <div class="user-item">${project.designer}</div>
+                        <div class="user-item">${project.client}</div>
+                        <div class="user-item">${project.operator}</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="project-title">${project.title}</div>
+                    <div class="project-info">
+                        <div class="info-item">${project.targetAudience}</div>
+                        <div class="info-item">${project.category}</div>
+                        <div class="info-item">${project.priceRange}</div>
+                    </div>
+                    <div class="timestamps">
+                        <div class="timestamp">创建: ${project.createdAt}</div>
+                        <div class="timestamp">更新: ${project.updatedAt}</div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="action-btn">应用至新需求参考</button>
+                    <button class="action-btn">查看详情</button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 渲染看板
+        function renderKanban() {
+            const columns = document.querySelectorAll('.column-content');
+            
+            columns.forEach(column => {
+                column.innerHTML = '';
+                const columnStatus = column.dataset.column;
+                const projectsInColumn = projectData.filter(project => project.status === columnStatus);
+                
+                projectsInColumn.forEach(project => {
+                    const card = createCard(project);
+                    column.appendChild(card);
+                });
+            });
+        }
+
+        // 拖拽功能
+        let draggedElement = null;
+
+        function initDragAndDrop() {
+            const cards = document.querySelectorAll('.card');
+            const columns = document.querySelectorAll('.column-content');
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+
+            columns.forEach(column => {
+                column.addEventListener('dragover', handleDragOver);
+                column.addEventListener('drop', handleDrop);
+                column.addEventListener('dragenter', handleDragEnter);
+                column.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedElement = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.target.closest('.column-content').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.closest('.column-content').classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const column = e.target.closest('.column-content');
+            column.classList.remove('drag-over');
+
+            if (draggedElement && column) {
+                const newStatus = column.dataset.column;
+                const projectId = draggedElement.dataset.projectId;
+                
+                // 更新数据
+                const project = projectData.find(p => p.id === projectId);
+                if (project) {
+                    project.status = newStatus;
+                    
+                    // 更新状态文本和颜色
+                    switch (newStatus) {
+                        case 'presale':
+                            project.statusText = '预售测试';
+                            project.statusColor = 'pending';
+                            break;
+                        case 'pending':
+                            project.statusText = '待交付';
+                            project.statusColor = 'pending';
+                            break;
+                        case 'completed':
+                            project.statusText = '已复盘';
+                            project.statusColor = 'completed';
+                            break;
+                    }
+                }
+
+                // 重新渲染看板
+                renderKanban();
+                initDragAndDrop();
+
+                // 显示成功消息
+                showNotification(`项目 ${projectId} 已移动到 ${getStatusText(newStatus)}`);
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'presale': '预售测试',
+                'pending': '待交付',
+                'completed': '已复盘'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 通知功能
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #1f7fff;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 1000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 添加 CSS 动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderKanban();
+            initDragAndDrop();
+
+            // 添加按钮点击事件
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('action-btn')) {
+                    const action = e.target.textContent;
+                    const card = e.target.closest('.card');
+                    const projectId = card.dataset.projectId;
+                    
+                    showNotification(`${action} - 项目 ${projectId}`);
+                }
+            });
+        });
+
+        // 响应式处理
+        window.addEventListener('resize', function() {
+            // 可以在这里添加响应式逻辑
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,3860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求协同看板 - CHIMER</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 整体页面布局 */
+        .page-container {
+            min-height: 100vh;
+        }
+
+        /* 左侧导航栏 - 固定不滚动 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid #e8eaed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 8px;
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        .logo {
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: #4285f4;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .logo-text {
+            font-size: 10px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .nav-item {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: #f8f9fa;
+        }
+
+        .nav-item.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .nav-item-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .nav-item-text {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .nav-item.active .nav-item-text {
+            color: #1a73e8;
+        }
+
+        /* 主内容区 - 独立滚动 */
+        .main-content {
+            margin-left: 80px;
+            padding-top: 73px; /* 为固定头部预留空间 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f5f7fa;
+        }
+
+        /* 顶部标题区 - 整栏固定吸顶 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 80px; /* 从导航栏右侧开始 */
+            right: 0;   /* 延伸到页面右边缘 */
+            z-index: 150;
+            background: #ffffff;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            height: 73px; /* 明确设置头部高度 */
+            box-sizing: border-box;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-left: auto;
+        }
+
+        .role-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dadce0;
+        }
+
+        .role-label {
+            font-size: 14px;
+            color: #5f6368;
+            font-weight: 500;
+        }
+
+        .role-select {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: #202124;
+            cursor: pointer;
+            outline: none;
+            min-width: 80px;
+        }
+
+        .role-select:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .status-tip {
+            background: #fef7f0;
+            color: #e37400;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid #fdd8b5;
+        }
+
+        .new-demand-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .new-demand-btn:hover {
+            background: #1557b0;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 复盘区域 */
+        .review-section {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+            overflow: hidden;
+        }
+
+        .review-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .review-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .apply-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .apply-btn:hover {
+            background: #1557b0;
+        }
+
+        .review-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1px;
+            background: #e8eaed;
+        }
+
+        .review-column {
+            background: #ffffff;
+            padding: 20px;
+            min-height: 180px;
+        }
+
+        .review-column-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .review-text {
+            font-size: 13px;
+            color: #5f6368;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .review-text.collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .expand-btn {
+            color: #1a73e8;
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 8px;
+            padding: 0;
+        }
+
+        .expand-btn:hover {
+            color: #1557b0;
+        }
+
+        /* 看板区域 */
+        .kanban-section {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background: #e8eaed;
+            flex: 1;
+        }
+
+        .kanban-column {
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+        }
+
+        .kanban-column-header {
+            padding: 12px 16px;
+            background: #f1f3f4;
+            border-bottom: 1px solid #e8eaed;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        .kanban-column-content {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .kanban-card {
+            background: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #e8eaed;
+            padding: 20px 12px 12px 12px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .kanban-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .card-status {
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 2px 8px;
+            border-radius: 0 0 4px 4px;
+            font-size: 10px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .status-pending { background: #ea4335; }
+        .status-designing { background: #fbbc04; }
+        .status-delivered { background: #34a853; }
+        .status-testing { background: #4285f4; }
+        .status-reviewed { background: #9aa0a6; }
+
+        .card-image {
+            width: 60px;
+            height: 60px;
+            background: #f1f3f4;
+            border-radius: 4px;
+            margin: 16px auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-update-time {
+            font-size: 11px;
+            color: #9aa0a6;
+            text-align: center;
+        }
+
+        .card-review-id {
+            font-size: 10px;
+            color: #202124;
+            text-align: center;
+            font-weight: 500;
+            margin-top: 3px;
+        }
+
+        .card-review-id .field-label {
+            color: #202124;
+            font-weight: 600;
+        }
+
+        /* 卡片字段样式 */
+        .card-field {
+            margin: 4px 0;
+            font-size: 12px;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .field-label {
+            color: #5f6368;
+            font-weight: 500;
+            min-width: 50px;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            color: #202124;
+            word-break: break-word;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 待确认列特殊样式 */
+        [data-status="pending"] .field-value {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 已复盘列字段值可以换行 */
+        [data-status="reviewed"] .field-value {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .review-id-value {
+            color: #34a853;
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* 删除按钮样式 */
+        .card-delete-btn {
+            background: none;
+            border: none;
+            color: #ea4335;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 0;
+            margin-top: 8px;
+            text-decoration: underline;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* 待确认列删除按钮特殊样式 */
+        [data-status="pending"] .card-delete-btn {
+            margin-top: 0;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            padding: 6px 4px;
+        }
+
+        .card-delete-btn:hover {
+            color: #d33b2c;
+            background: #fef7f0;
+        }
+
+        /* 卡片操作按钮样式 */
+        .card-action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            justify-content: center;
+        }
+
+        /* 待确认列操作按钮特殊样式 - 2列等宽 */
+        [data-status="pending"] .card-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        [data-status="pending"] .card-action-btn,
+        [data-status="pending"] .card-delete-btn {
+            width: 100%;
+            text-align: center;
+            padding: 6px 4px;
+        }
+
+        .card-action-btn {
+            background: none;
+            border: none;
+            color: #1a73e8;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .card-action-btn:hover {
+            background: #f1f3ff;
+            color: #1557b0;
+        }
+
+        .card-edit-btn {
+            color: #1a73e8;
+        }
+
+        .card-edit-btn:hover {
+            background: #f1f3ff;
+            color: #1557b0;
+        }
+
+        .card-upload-btn {
+            color: #1a73e8;
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .card-upload-btn:hover {
+            background: #f1f3ff;
+            color: #1557b0;
+        }
+
+        .card-modify-btn {
+            color: #1a73e8;
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .card-modify-btn:hover {
+            background: #f1f3ff;
+            color: #1557b0;
+        }
+
+        .card-modify-design-btn {
+            color: #1a73e8;
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .card-modify-design-btn:hover {
+            background: #f1f3ff;
+            color: #1557b0;
+        }
+
+
+
+        .review-id {
+            font-size: 14px;
+            color: #5f6368;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+
+        /* 目标人群表单样式 */
+        .target-audience-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .target-audience-selects {
+            display: flex;
+            gap: 12px;
+        }
+
+        .target-audience-selects .form-control {
+            flex: 1;
+        }
+
+        .target-description {
+            resize: vertical;
+            min-height: 50px;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+
+        .form-example {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .form-example-inline {
+            font-size: 12px;
+            color: #5f6368;
+            font-style: italic;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+
+        /* 参考复盘ID样式 */
+        .linked-review-id {
+            background: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .linked-review-id-title {
+            font-size: 12px;
+            color: #5f6368;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .linked-review-id-value {
+            font-size: 14px;
+            color: #34a853;
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .linked-review-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cancel-reference-btn,
+        .restore-reference-btn {
+            background: #ea4335;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .cancel-reference-btn:hover {
+            background: #c5221f;
+        }
+
+        .restore-reference-btn {
+            background: #1a73e8;
+        }
+
+        .restore-reference-btn:hover {
+            background: #1557b0;
+        }
+
+        .cancelled-review-state {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cancelled-review-title {
+            font-size: 14px;
+            color: #9aa0a6;
+            font-weight: 500;
+        }
+
+        /* 上传参考样式 */
+        .upload-area {
+            margin-bottom: 16px;
+        }
+
+        .upload-zone {
+            border: 2px dashed #dadce0;
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #4285f4;
+            background: #f8f9ff;
+        }
+
+        .upload-zone.drag-over {
+            border-color: #4285f4;
+            background: #e8f0fe;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: #202124;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #5f6368;
+        }
+
+        .image-preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e8eaed;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .image-preview-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(234, 67, 53, 0.9);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .image-preview-item:hover .image-delete-btn {
+            opacity: 1;
+        }
+
+        .image-delete-btn:hover {
+            background: rgba(234, 67, 53, 1);
+        }
+
+        .upload-counter {
+            font-size: 12px;
+            color: #5f6368;
+            text-align: right;
+            margin-bottom: 8px;
+        }
+
+        /* 图片查看模态框 */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            cursor: pointer;
+        }
+
+        .image-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #202124;
+        }
+
+        .image-modal-close:hover {
+            background: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .review-content {
+                grid-template-columns: 1fr;
+            }
+
+            .kanban-board {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+                padding: 10px 0;
+            }
+
+            .main-content {
+                margin-left: 60px;
+                padding-top: 93px; /* 移动端头部高度调整 */
+            }
+
+            .header {
+                left: 60px; /* 适配窄导航栏 */
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+                height: 93px; /* 移动端头部高度 */
+            }
+
+            .header-left {
+                justify-content: center;
+            }
+
+            .header-right {
+                justify-content: center;
+                margin-left: 0;
+            }
+
+            .content-area {
+                padding: 16px;
+            }
+
+            .kanban-board {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 拖拽状态 */
+        .kanban-card.dragging {
+            opacity: 0.8;
+            transform: rotate(2deg);
+        }
+
+        .kanban-column.drag-over {
+            background: #e8f0fe;
+        }
+
+        /* 滚动条样式 */
+        .kanban-column-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .kanban-column-content::-webkit-scrollbar-track {
+            background: #f1f3f4;
+        }
+
+        .kanban-column-content::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 2px;
+        }
+
+        .kanban-column-content::-webkit-scrollbar-thumb:hover {
+            background: #bdc1c6;
+        }
+
+        /* 新增需求抽屉弹框 */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .drawer-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .demand-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 480px;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 12px 0 0 12px;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            z-index: 1001;
+        }
+
+        .drawer-overlay.show .demand-drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .drawer-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #202124;
+            margin: 0;
+        }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #5f6368;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .drawer-close:hover {
+            background: #f8f9fa;
+            color: #202124;
+        }
+
+        .drawer-body {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: #ea4335;
+        }
+
+        .required-star {
+            color: #ea4335;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #202124;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #ea4335;
+        }
+
+        .error-message {
+            color: #ea4335;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 单选按钮组 */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .radio-item:hover {
+            background: #f8f9fa;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #1a73e8;
+            cursor: pointer;
+        }
+
+        .radio-item label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #202124;
+            flex: 1;
+        }
+
+        /* 价位带输入 */
+        .price-range {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .price-input-group {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .currency-select {
+            width: 70px;
+            padding: 12px 8px;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #ffffff;
+        }
+
+        .price-input {
+            flex: 1;
+        }
+
+        .price-separator {
+            color: #5f6368;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        /* 标签输入 */
+        .tag-input-container {
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            padding: 8px;
+            min-height: 44px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            cursor: text;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+
+        .tag-input-container:focus-within {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .tag-item {
+            display: flex;
+            align-items: center;
+            background: #374455;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            gap: 4px;
+        }
+
+        .tag-item.review-tag {
+            background: #34a853;
+            color: white;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0;
+            margin-left: 4px;
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 120px;
+            font-size: 14px;
+            padding: 4px;
+            background: transparent;
+        }
+
+        /* 参考复盘标签区域 */
+        .linked-tags {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e8eaed;
+        }
+
+        .linked-tags-title {
+            font-size: 12px;
+            color: #5f6368;
+            margin-bottom: 8px;
+        }
+
+        .linked-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        /* 提交区域 */
+        .drawer-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e8eaed;
+            background: #ffffff;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+            border-color: #1a73e8;
+        }
+
+        .btn-primary:hover {
+            background: #1557b0;
+            border-color: #1557b0;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #5f6368;
+            border-color: #dadce0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #bdc1c6;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .demand-drawer {
+                width: 100%;
+                border-radius: 0;
+            }
+
+            .drawer-body {
+                padding: 16px;
+            }
+
+            .drawer-footer {
+                padding: 16px;
+                flex-direction: column;
+            }
+
+            .price-range {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <div class="logo-text">CHIMER</div>
+            </div>
+
+            <div class="nav-item">
+                <div class="nav-item-icon">🚀</div>
+                <div class="nav-item-text">快速生成</div>
+            </div>
+
+            <div class="nav-item active">
+                <div class="nav-item-icon">🤝</div>
+                <div class="nav-item-text">需求协同</div>
+            </div>
+
+            <div class="nav-item">
+                <div class="nav-item-icon">🔬</div>
+                <div class="nav-item-text">实验室</div>
+            </div>
+
+            <div class="nav-item">
+                <div class="nav-item-icon">📋</div>
+                <div class="nav-item-text">企划版</div>
+            </div>
+
+            <div class="nav-item">
+                <div class="nav-item-icon">⭐</div>
+                <div class="nav-item-text">我的收藏</div>
+            </div>
+
+            <div class="nav-item">
+                <div class="nav-item-icon">🎨</div>
+                <div class="nav-item-text">素材库</div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 顶部标题区 -->
+            <div class="header">
+                <div class="header-left">
+                    <h1 class="page-title">需求协同看板</h1>
+                    <span class="status-tip">拖拽卡片可变更状态</span>
+                </div>
+                <div class="header-right">
+                    <button class="new-demand-btn" id="newDemandBtn">新增需求</button>
+                    <div class="role-selector">
+                        <label for="roleSelect" class="role-label">角色：</label>
+                        <select id="roleSelect" class="role-select">
+                            <option value="client" selected>客户</option>
+                            <option value="designer">设计师</option>
+                            <option value="operator">运营</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <!-- 复盘区域 -->
+                <div class="review-section">
+                    <div class="review-header">
+                        <h2 class="review-title">上轮交付复盘</h2>
+                        <button class="apply-btn" id="applyBtn">应用至新需求参考</button>
+                    </div>
+                    <div class="review-content">
+                        <div class="review-column">
+                            <h3 class="review-column-title">市场亮点</h3>
+                            <div class="review-text collapsed" id="highlightsText">
+                                本次设计在色彩搭配上采用了当下最流行的莫兰迪色系，整体风格简约而不失精致。版型设计充分考虑了亚洲女性的身材特点，腰线设计恰到好处，既修饰了身形又保持了舒适度。面料选择上采用了高品质的棉麻混纺材质，透气性好，适合春夏季节穿着。细节处理上，我们在领口和袖口增加了精致的包边工艺，提升了整体的品质感。此外，考虑到现代女性的穿搭需求，设计中融入了多种搭配可能性，既可以商务正装，也能够休闲出街，实用性和时尚性并重。
+                            </div>
+                            <button class="expand-btn" onclick="toggleExpand('highlightsText', this)">展开</button>
+                        </div>
+                        <div class="review-column">
+                            <h3 class="review-column-title">市场数据</h3>
+                            <div class="review-text collapsed" id="metricsText">
+                                根据上线后的市场反馈数据显示，该产品在目标人群中的接受度达到了85%，远超预期的70%。销售数据方面，首发两周内售出1200件，转化率达到了12.5%。用户评价整体积极，4.8分的高评分体现了产品的市场认可度。从年龄分布来看，25-35岁女性占比最高，达到60%，与我们的目标人群高度吻合。地域分布上，一线城市占比45%，二线城市占比35%，显示出良好的市场渗透力。复购率达到了30%，说明产品的用户粘性较强。通过社交媒体的传播，获得了大量的用户生成内容，进一步扩大了品牌影响力。
+                            </div>
+                            <button class="expand-btn" onclick="toggleExpand('metricsText', this)">展开</button>
+                        </div>
+                        <div class="review-column">
+                            <h3 class="review-column-title">问题&改进</h3>
+                            <div class="review-text collapsed" id="improvementsText">
+                                虽然整体表现良好，但仍有一些需要改进的地方。首先，部分用户反馈尺码偏小，建议在下一版本中调整尺码标准，特别是胸围和腰围的设计。其次，颜色选择相对有限，建议增加更多色彩选项以满足不同用户的需求。包装方面，有用户提到包装过于简单，建议提升包装的质感和设计感。物流配送上，部分地区的配送时间较长，需要优化供应链管理。客服响应速度也有待提升，建议增加客服人员配置。此外，产品说明和洗护指南需要更加详细，帮助用户更好地保养产品。最后，建议在下一季产品中增加更多的搭配建议和穿着场景展示。
+                            </div>
+                            <button class="expand-btn" onclick="toggleExpand('improvementsText', this)">展开</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 看板区域 -->
+                <div class="kanban-section">
+                    <div class="kanban-board">
+                        <!-- 待确认列 -->
+                        <div class="kanban-column" data-status="pending">
+                            <div class="kanban-column-header">待确认(2)</div>
+                            <div class="kanban-column-content">
+                                <div class="kanban-card" draggable="true" data-id="1">
+                                    <div class="card-status status-pending">待确认</div>
+                                    <div class="card-field">
+                                        <span class="field-label">目标人群:</span>
+                                        <span class="field-value">女性，25-35岁，一线城市白领</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">品类:</span>
+                                        <span class="field-value">上装:T恤</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">价位带:</span>
+                                        <span class="field-value">¥199-299</span>
+                                    </div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 20:30:56</div>
+                                    <div class="card-action-buttons">
+                                        <button class="card-action-btn card-edit-btn" onclick="editCard('1')">编辑</button>
+                                        <button class="card-delete-btn" onclick="deleteCard('1')">删除</button>
+                                    </div>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="2">
+                                    <div class="card-status status-pending">待确认</div>
+                                    <div class="card-field">
+                                        <span class="field-label">目标人群:</span>
+                                        <span class="field-value">女性，18-25岁，学生群体</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">品类:</span>
+                                        <span class="field-value">裙装:连衣裙</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">价位带:</span>
+                                        <span class="field-value">¥129-199</span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value">20241215888</span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 19:15:32</div>
+                                    <div class="card-action-buttons">
+                                        <button class="card-action-btn card-edit-btn" onclick="editCard('2')">编辑</button>
+                                        <button class="card-delete-btn" onclick="deleteCard('2')">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 设计中列 -->
+                        <div class="kanban-column" data-status="designing">
+                            <div class="kanban-column-header">设计中(2)</div>
+                            <div class="kanban-column-content">
+                                <div class="kanban-card" draggable="true" data-id="3">
+                                    <div class="card-status status-designing">设计中</div>
+                                    <div class="card-image">👚</div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 20:30:56</div>
+                                    <button class="card-action-btn card-upload-btn" onclick="uploadDesign('3')">上传设计稿</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="4">
+                                    <div class="card-status status-designing">设计中</div>
+                                    <div class="card-image">🧥</div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 18:45:21</div>
+                                    <button class="card-action-btn card-upload-btn" onclick="uploadDesign('4')">上传设计稿</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 已交付列 -->
+                        <div class="kanban-column" data-status="delivered">
+                            <div class="kanban-column-header">已交付(1)</div>
+                            <div class="kanban-column-content">
+                                <div class="kanban-card" draggable="true" data-id="8">
+                                    <div class="card-status status-delivered">已交付</div>
+                                    <div class="card-image">🧣</div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 20:30:56</div>
+                                    <button class="card-action-btn card-modify-design-btn" onclick="modifyDesign('8')">修改设计稿</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 预售测试列 -->
+                        <div class="kanban-column" data-status="testing">
+                            <div class="kanban-column-header">预售测试(3)</div>
+                            <div class="kanban-column-content">
+                                <div class="kanban-card" draggable="true" data-id="5">
+                                    <div class="card-status status-testing">预售测试</div>
+                                    <div class="card-image">👖</div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 20:30:56</div>
+                                    <button class="card-action-btn card-upload-btn" onclick="uploadReviewData('5')">上传复盘数据</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="6">
+                                    <div class="card-status status-testing">预售测试</div>
+                                    <div class="card-image">👜</div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 17:22:10</div>
+                                    <button class="card-action-btn card-upload-btn" onclick="uploadReviewData('6')">上传复盘数据</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="7">
+                                    <div class="card-status status-testing">预售测试</div>
+                                    <div class="card-image">👠</div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 16:08:45</div>
+                                    <button class="card-action-btn card-upload-btn" onclick="uploadReviewData('7')">上传复盘数据</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 已复盘列 -->
+                        <div class="kanban-column" data-status="reviewed">
+                            <div class="kanban-column-header">已复盘(5)</div>
+                            <div class="kanban-column-content">
+                                <div class="kanban-card" draggable="true" data-id="9" data-review-id="20241215001">
+                                    <div class="card-status status-reviewed">已复盘</div>
+                                    <div class="card-image">👘</div>
+                                    <div class="card-field">
+                                        <span class="field-label">设计亮点:</span>
+                                        <span class="field-value">莫兰迪色系，简约精致</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">市场数据:</span>
+                                        <span class="field-value">转化率12.5%，好评4.8分</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">问题改进:</span>
+                                        <span class="field-value">尺码偏小，需调整标准</span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value">20241215000</span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">复盘ID:</span>
+                                        <span class="field-value">20241215001</span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 20:30:56</div>
+                                    <button class="card-action-btn card-modify-btn" onclick="modifyReviewData('9')">修改复盘数据</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="10" data-review-id="20241215002">
+                                    <div class="card-status status-reviewed">已复盘</div>
+                                    <div class="card-image">👙</div>
+                                    <div class="card-field">
+                                        <span class="field-label">设计亮点:</span>
+                                        <span class="field-value">版型修身，细节精致</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">市场数据:</span>
+                                        <span class="field-value">复购率30%，销量1200件</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">问题改进:</span>
+                                        <span class="field-value">颜色选择有限，需增加</span>
+                                    </div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">复盘ID:</span>
+                                        <span class="field-value">20241215002</span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 15:45:30</div>
+                                    <button class="card-action-btn card-modify-btn" onclick="modifyReviewData('10')">修改复盘数据</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="11" data-review-id="20241215003">
+                                    <div class="card-status status-reviewed">已复盘</div>
+                                    <div class="card-image">🩱</div>
+                                    <div class="card-field">
+                                        <span class="field-label">设计亮点:</span>
+                                        <span class="field-value">舒适透气，适合夏季</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">市场数据:</span>
+                                        <span class="field-value">目标人群接受度85%</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">问题改进:</span>
+                                        <span class="field-value">包装简单，需提升质感</span>
+                                    </div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">复盘ID:</span>
+                                        <span class="field-value">20241215003</span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 14:20:15</div>
+                                    <button class="card-action-btn card-modify-btn" onclick="modifyReviewData('11')">修改复盘数据</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="12" data-review-id="20241215004">
+                                    <div class="card-status status-reviewed">已复盘</div>
+                                    <div class="card-image">🧤</div>
+                                    <div class="card-field">
+                                        <span class="field-label">设计亮点:</span>
+                                        <span class="field-value">多场景搭配，实用性强</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">市场数据:</span>
+                                        <span class="field-value">一线城市占比45%</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">问题改进:</span>
+                                        <span class="field-value">物流配送时间长</span>
+                                    </div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">复盘ID:</span>
+                                        <span class="field-value">20241215004</span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 13:10:08</div>
+                                    <button class="card-action-btn card-modify-btn" onclick="modifyReviewData('12')">修改复盘数据</button>
+                                </div>
+                                <div class="kanban-card" draggable="true" data-id="13" data-review-id="20241215005">
+                                    <div class="card-status status-reviewed">已复盘</div>
+                                    <div class="card-image">🎩</div>
+                                    <div class="card-field">
+                                        <span class="field-label">设计亮点:</span>
+                                        <span class="field-value">经典时尚，不易过时</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">市场数据:</span>
+                                        <span class="field-value">社交媒体传播广泛</span>
+                                    </div>
+                                    <div class="card-field">
+                                        <span class="field-label">问题改进:</span>
+                                        <span class="field-value">客服响应速度待提升</span>
+                                    </div>
+                                    <div class="card-review-id" style="display: none;">
+                                        <span class="field-label">参考复盘ID:</span>
+                                        <span class="field-value review-id-value"></span>
+                                    </div>
+                                    <div class="card-review-id">
+                                        <span class="field-label">复盘ID:</span>
+                                        <span class="field-value">20241215005</span>
+                                    </div>
+                                    <div class="card-update-time">更新: 2025-08-24 12:05:42</div>
+                                    <button class="card-action-btn card-modify-btn" onclick="modifyReviewData('13')">修改复盘数据</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增需求抽屉弹框 -->
+    <div class="drawer-overlay" id="demandDrawer">
+        <div class="demand-drawer">
+            <div class="drawer-header">
+                <h2 class="drawer-title">新增需求</h2>
+                <button class="drawer-close" id="closeDrawer">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <form id="demandForm">
+                    <!-- 目标人群 -->
+                    <div class="form-group">
+                        <label class="form-label">目标人群 <span class="required-star">*</span> <span class="form-example-inline">示例：女性，25-35岁，一线城市白领</span></label>
+                        <div class="target-audience-group">
+                            <div class="target-audience-selects">
+                                <select id="gender" name="gender" class="form-control">
+                                    <option value="">选择性别</option>
+                                    <option value="女性">女性</option>
+                                    <option value="男性">男性</option>
+                                    <option value="不限">不限</option>
+                                </select>
+                                <select id="age_range" name="age_range" class="form-control">
+                                    <option value="">选择年龄</option>
+                                    <option value="18-25岁">18-25岁</option>
+                                    <option value="25-35岁">25-35岁</option>
+                                    <option value="35-45岁">35-45岁</option>
+                                    <option value="45-55岁">45-55岁</option>
+                                    <option value="55岁以上">55岁以上</option>
+                                </select>
+                            </div>
+                            <textarea id="target_description" name="target_description" class="form-control target-description" 
+                                placeholder="请描述目标人群特征（如：一线城市白领、学生群体等），限100字" 
+                                maxlength="100" rows="2"></textarea>
+                            <div class="char-count">
+                                <span id="target_description_count">0</span>/100
+                            </div>
+                        </div>
+                        <div class="error-message" id="target_audience_error">请完善目标人群信息</div>
+                    </div>
+
+                    <!-- 品类 -->
+                    <div class="form-group">
+                        <label class="form-label required" for="category">品类</label>
+                        <select id="category" name="category" class="form-control">
+                            <option value="">请选择品类</option>
+                            <optgroup label="上装">
+                                <option value="上装:T恤">T恤</option>
+                                <option value="上装:西装">西装</option>
+                                <option value="上装:卫衣">卫衣</option>
+                                <option value="上装:衬衫">衬衫</option>
+                                <option value="上装:毛衣">毛衣</option>
+                                <option value="上装:背心">背心</option>
+                            </optgroup>
+                            <optgroup label="下装">
+                                <option value="下装:牛仔长裤">牛仔长裤</option>
+                                <option value="下装:西裤">西裤</option>
+                                <option value="下装:休闲长裤">休闲长裤</option>
+                                <option value="下装:休闲短裤">休闲短裤</option>
+                                <option value="下装:运动短裤">运动短裤</option>
+                                <option value="下装:阔腿裤">阔腿裤</option>
+                            </optgroup>
+                            <optgroup label="裙装">
+                                <option value="裙装:连衣裙">连衣裙</option>
+                                <option value="裙装:西装裙">西装裙</option>
+                                <option value="裙装:半身裙">半身裙</option>
+                                <option value="裙装:百褶裙">百褶裙</option>
+                                <option value="裙装:背心裙">背心裙</option>
+                            </optgroup>
+                        </select>
+                        <div class="error-message" id="category_error">请选择品类</div>
+                    </div>
+
+                    <!-- 价位带 -->
+                    <div class="form-group">
+                        <label class="form-label">价位带</label>
+                        <div class="price-range">
+                            <div class="price-input-group">
+                                <select class="currency-select" id="currency_min">
+                                    <option value="¥">¥</option>
+                                    <option value="$">$</option>
+                                    <option value="€">€</option>
+                                </select>
+                                <input type="number" id="price_min" name="price_min" class="form-control price-input" placeholder="最低价" min="0">
+                            </div>
+                            <span class="price-separator">～</span>
+                            <div class="price-input-group">
+                                <select class="currency-select" id="currency_max">
+                                    <option value="¥">¥</option>
+                                    <option value="$">$</option>
+                                    <option value="€">€</option>
+                                </select>
+                                <input type="number" id="price_max" name="price_max" class="form-control price-input" placeholder="最高价" min="0">
+                            </div>
+                        </div>
+                        <div class="error-message" id="price_error">价格区间有误，最高价应大于最低价</div>
+                    </div>
+
+                    <!-- 灵感词 -->
+                    <div class="form-group">
+                        <label class="form-label">灵感词</label>
+                        <div class="tag-input-container" id="tagContainer">
+                            <input type="text" class="tag-input" id="tagInput" placeholder="输入灵感词后按Enter添加">
+                        </div>
+                        <div class="linked-review-id" id="linkedReviewId" style="display: none;">
+                            <!-- 正常关联状态 -->
+                            <div class="linked-review-state" id="linkedState">
+                                <div class="linked-review-id-title">已关联参考复盘ID：</div>
+                                <div class="linked-review-content">
+                                    <div class="linked-review-id-value" id="linkedReviewIdValue"></div>
+                                    <button class="cancel-reference-btn" id="cancelReferenceBtn" onclick="cancelReference(event)">取消参考</button>
+                                </div>
+                            </div>
+                            <!-- 取消关联状态 -->
+                            <div class="cancelled-review-state" id="cancelledState" style="display: none;">
+                                <div class="cancelled-review-title">已取消关联参考复盘ID</div>
+                                <button class="restore-reference-btn" id="restoreReferenceBtn" onclick="restoreReference(event)">重新关联</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 上传参考 -->
+                    <div class="form-group">
+                        <label class="form-label">上传参考</label>
+                        <div class="upload-area">
+                            <input type="file" id="referenceUpload" accept=".png,.jpg,.jpeg" multiple style="display: none;">
+                            <div class="upload-zone" id="uploadZone">
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">点击上传或拖拽图片到此处</div>
+                                <div class="upload-hint">支持PNG、JPG、JPEG格式，最多上传10张</div>
+                            </div>
+                        </div>
+                        <div class="image-preview-container" id="imagePreviewContainer"></div>
+                        <div class="upload-counter">
+                            <span id="uploadedCount">0</span>/10张
+                        </div>
+                        <div class="error-message" id="upload_error">图片数量超过限制或格式不支持</div>
+                    </div>
+                </form>
+            </div>
+            <div class="drawer-footer">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
+                <button type="button" class="btn btn-primary" id="submitBtn">提交需求</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片查看模态框 -->
+    <div class="image-modal" id="imageModal">
+        <button class="image-modal-close" id="imageModalClose">×</button>
+        <div class="image-modal-content">
+            <img id="modalImage" src="" alt="预览图片">
+        </div>
+    </div>
+
+    <script>
+        // 拖拽功能
+        let draggedCard = null;
+
+        // 全局变量
+        let currentTags = [];
+        let linkedReviewTags = [];
+        let isFromApplyButton = false;
+        let currentRole = 'client'; // 当前角色：client/designer/operator
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== 页面初始化开始 ===');
+            
+            initDragAndDrop();
+            initButtons();
+            initDrawer();
+            initFormValidation();
+            initTagInput();
+            initCharCounter();
+            sortKanbanCards();
+            generateReviewIds();
+            displayReviewId();
+            
+            console.log('基础功能初始化完成，开始初始化角色管理...');
+            
+            // 直接初始化角色管理，不使用setTimeout
+            initRoleManagement();
+            
+            // 初始化参考复盘ID显示
+            initReferenceReviewIdDisplay();
+            
+            console.log('=== 页面初始化完成 ===');
+        });
+
+        // 初始化参考复盘ID显示
+        function initReferenceReviewIdDisplay() {
+            console.log('🔧 初始化参考复盘ID显示');
+            
+            const allCards = document.querySelectorAll('.kanban-card');
+            allCards.forEach((card, index) => {
+                const referenceElements = card.querySelectorAll('.card-review-id');
+                
+                referenceElements.forEach(element => {
+                    const label = element.querySelector('.field-label');
+                    const value = element.querySelector('.review-id-value');
+                    
+                    // 如果这是参考复盘ID字段且有值，则显示
+                    if (label && label.textContent.includes('参考复盘ID') && value && value.textContent.trim()) {
+                        element.style.display = 'block';
+                        console.log(`卡片 ${index + 1} 显示参考复盘ID: ${value.textContent.trim()}`);
+                    }
+                });
+            });
+            
+            console.log('参考复盘ID显示初始化完成');
+        }
+
+        function initDragAndDrop() {
+            const cards = document.querySelectorAll('.kanban-card');
+            const columns = document.querySelectorAll('.kanban-column');
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+
+            columns.forEach(column => {
+                column.addEventListener('dragover', handleDragOver);
+                column.addEventListener('drop', handleDrop);
+                column.addEventListener('dragenter', handleDragEnter);
+                column.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedCard = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedCard = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('kanban-column') || e.target.closest('.kanban-column')) {
+                const column = e.target.classList.contains('kanban-column') ? e.target : e.target.closest('.kanban-column');
+                column.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (e.target.classList.contains('kanban-column') || e.target.closest('.kanban-column')) {
+                const column = e.target.classList.contains('kanban-column') ? e.target : e.target.closest('.kanban-column');
+                column.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const column = e.target.classList.contains('kanban-column') ? e.target : e.target.closest('.kanban-column');
+            
+            if (column) {
+                column.classList.remove('drag-over');
+                
+                if (draggedCard && column) {
+                    const newStatus = column.dataset.status;
+                    const currentColumn = draggedCard.closest('.kanban-column');
+                    const currentStatus = currentColumn.dataset.status;
+                    
+                    // 仅支持横向拖动（跨列移动），不支持列内移动
+                    if (currentStatus === newStatus) {
+                        showNotification('不支持在同列内移动卡片', 'error');
+                        return;
+                    }
+                    
+                    // 角色权限检查
+                    if (!checkDragPermission(currentStatus, newStatus)) {
+                        const roleName = getRoleDisplayName(currentRole);
+                        showNotification(`${roleName}角色无权限进行此操作`, 'error');
+                        return;
+                    }
+                    
+                    // 拖动到其他状态列时弹框确认
+                    const fromStatusText = getStatusText(currentStatus);
+                    const toStatusText = getStatusText(newStatus);
+                    const confirmMessage = `确定要将卡片从"${fromStatusText}"移动到"${toStatusText}"吗？`;
+                    
+                    if (!confirm(confirmMessage)) {
+                        return; // 用户取消，不进行移动
+                    }
+                    
+                    const cardId = draggedCard.dataset.id;
+                    
+                    // 移动卡片到新列
+                    const content = column.querySelector('.kanban-column-content');
+                    content.appendChild(draggedCard);
+                    
+                    // 更新卡片状态
+                    updateCardStatus(draggedCard, newStatus);
+                    
+                    // 如果移动到已复盘状态，生成复盘ID
+                    if (newStatus === 'reviewed') {
+                        generateReviewIdForCard(draggedCard);
+                    }
+                    
+                    // 更新时间戳
+                    updateCardTimestamp(draggedCard);
+                    
+                    // 重新排序所有列的卡片
+                    sortKanbanCards();
+                    
+                    // 更新列计数
+                    updateColumnCounts();
+                    
+                    // 重新应用角色权限，确保新状态的卡片显示对应的操作按钮
+                    console.log(`卡片状态变更完成，重新应用${getRoleDisplayName(currentRole)}角色权限...`);
+                    applyRolePermissions(currentRole);
+                    console.log(`${getRoleDisplayName(currentRole)}角色权限应用完成，新状态卡片操作按钮已更新`);
+                    
+                    // 显示成功消息
+                    showNotification(`卡片已移动到 ${getStatusText(newStatus)}`);
+                }
+            }
+        }
+
+        function updateCardStatus(card, status) {
+            const statusElement = card.querySelector('.card-status');
+            const statusMap = {
+                'pending': { text: '待确认', class: 'status-pending' },
+                'designing': { text: '设计中', class: 'status-designing' },
+                'delivered': { text: '已交付', class: 'status-delivered' },
+                'testing': { text: '预售测试', class: 'status-testing' },
+                'reviewed': { text: '已复盘', class: 'status-reviewed' }
+            };
+            
+            if (statusMap[status]) {
+                statusElement.textContent = statusMap[status].text;
+                statusElement.className = `card-status ${statusMap[status].class}`;
+                
+                // 特殊处理：在所有状态变更时，保持参考复盘ID的显示
+                const referenceReviewIdElements = card.querySelectorAll('.card-review-id');
+                referenceReviewIdElements.forEach(element => {
+                    const label = element.querySelector('.field-label');
+                    const value = element.querySelector('.review-id-value');
+                    
+                    // 如果这是参考复盘ID字段且有值，则显示
+                    if (label && label.textContent.includes('参考复盘ID') && value && value.textContent.trim()) {
+                        element.style.display = 'block';
+                        console.log(`显示参考复盘ID: ${value.textContent.trim()}`);
+                    }
+                });
+                
+                // ✨ 新增：根据新状态更新操作按钮
+                updateCardActionButtons(card, status);
+            }
+        }
+
+        // 根据卡片状态更新操作按钮
+        function updateCardActionButtons(card, status) {
+            console.log(`更新卡片操作按钮，状态: ${status}`);
+            
+            const cardId = card.dataset.id;
+            let actionButtonsHtml = '';
+            
+            // 根据状态生成对应的操作按钮
+            switch(status) {
+                case 'pending':
+                    actionButtonsHtml = `
+                        <div class="card-action-buttons">
+                            <button class="card-action-btn card-edit-btn" onclick="editCard('${cardId}')">编辑</button>
+                            <button class="card-delete-btn" onclick="deleteCard('${cardId}')">删除</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'designing':
+                    actionButtonsHtml = `
+                        <button class="card-action-btn card-upload-btn" onclick="uploadDesign('${cardId}')">上传设计稿</button>
+                    `;
+                    break;
+                    
+                case 'delivered':
+                    actionButtonsHtml = `
+                        <button class="card-action-btn card-modify-design-btn" onclick="modifyDesign('${cardId}')">修改设计稿</button>
+                    `;
+                    break;
+                    
+                case 'testing':
+                    actionButtonsHtml = `
+                        <button class="card-action-btn card-upload-btn" onclick="uploadReviewData('${cardId}')">上传复盘数据</button>
+                    `;
+                    break;
+                    
+                case 'reviewed':
+                    actionButtonsHtml = `
+                        <button class="card-action-btn card-modify-btn" onclick="modifyReviewData('${cardId}')">修改复盘数据</button>
+                    `;
+                    break;
+                    
+                default:
+                    actionButtonsHtml = '';
+            }
+            
+            // 移除现有的操作按钮
+            const existingActionButtons = card.querySelector('.card-action-buttons');
+            const existingUploadBtn = card.querySelector('.card-upload-btn');
+            const existingModifyBtn = card.querySelector('.card-modify-btn');
+            const existingModifyDesignBtn = card.querySelector('.card-modify-design-btn');
+            const existingDeleteBtn = card.querySelector('.card-delete-btn');
+            
+            if (existingActionButtons) existingActionButtons.remove();
+            if (existingUploadBtn) existingUploadBtn.remove();
+            if (existingModifyBtn) existingModifyBtn.remove();
+            if (existingModifyDesignBtn) existingModifyDesignBtn.remove();
+            if (existingDeleteBtn && status !== 'pending') existingDeleteBtn.remove();
+            
+            // 添加新的操作按钮（在更新时间之后）
+            if (actionButtonsHtml) {
+                const updateTimeElement = card.querySelector('.card-update-time');
+                if (updateTimeElement) {
+                    updateTimeElement.insertAdjacentHTML('afterend', actionButtonsHtml);
+                } else {
+                    // 如果没有更新时间元素，添加到卡片末尾
+                    card.insertAdjacentHTML('beforeend', actionButtonsHtml);
+                }
+                console.log(`已添加${status}状态的操作按钮`);
+            } else {
+                console.log(`${status}状态无需添加操作按钮`);
+            }
+        }
+
+        function updateColumnCounts() {
+            const columns = document.querySelectorAll('.kanban-column');
+            columns.forEach(column => {
+                const cards = column.querySelectorAll('.kanban-card');
+                const header = column.querySelector('.kanban-column-header');
+                const status = column.dataset.status;
+                const statusNames = {
+                    'pending': '待确认',
+                    'designing': '设计中',
+                    'delivered': '已交付',
+                    'testing': '预售测试',
+                    'reviewed': '已复盘'
+                };
+                header.textContent = `${statusNames[status]}(${cards.length})`;
+            });
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待确认',
+                'designing': '设计中',
+                'delivered': '已交付',
+                'testing': '预售测试',
+                'reviewed': '已复盘'
+            };
+            return statusMap[status] || status;
+        }
+
+        function initButtons() {
+            // 新增需求按钮
+            document.getElementById('newDemandBtn').addEventListener('click', function() {
+                if (!hasPermission('newDemand')) {
+                    const roleName = getRoleDisplayName(currentRole);
+                    showNotification(`${roleName}角色无权限新增需求`, 'error');
+                    return;
+                }
+                isFromApplyButton = false;
+                openDrawer();
+            });
+
+            // 应用按钮
+            document.getElementById('applyBtn').addEventListener('click', function() {
+                if (!hasPermission('applyReference')) {
+                    const roleName = getRoleDisplayName(currentRole);
+                    showNotification(`${roleName}角色无权限应用复盘参考`, 'error');
+                    return;
+                }
+                isFromApplyButton = true;
+                applyReviewData();
+                openDrawer();
+            });
+        }
+
+        // 弹框控制
+        function initDrawer() {
+            const drawer = document.getElementById('demandDrawer');
+            const closeBtn = document.getElementById('closeDrawer');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // 关闭按钮事件
+            closeBtn.addEventListener('click', closeDrawer);
+            cancelBtn.addEventListener('click', closeDrawer);
+
+            // 点击遮罩关闭
+            drawer.addEventListener('click', function(e) {
+                if (e.target === drawer) {
+                    closeDrawer();
+                }
+            });
+
+            // ESC键关闭
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && drawer.classList.contains('show')) {
+                    closeDrawer();
+                }
+            });
+
+            // 提交按钮
+            submitBtn.addEventListener('click', submitForm);
+        }
+
+        function openDrawer() {
+            const drawer = document.getElementById('demandDrawer');
+            drawer.classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // 如果不是从应用按钮进入，重置表单
+            if (!isFromApplyButton) {
+                resetForm();
+            }
+        }
+
+        function closeDrawer() {
+            const drawer = document.getElementById('demandDrawer');
+            drawer.classList.remove('show');
+            document.body.style.overflow = '';
+            
+            // 重置状态
+            setTimeout(() => {
+                resetForm();
+                isFromApplyButton = false;
+            }, 300);
+        }
+
+        function resetForm() {
+            // 重置表单
+            document.getElementById('demandForm').reset();
+            
+            // 清空标签
+            currentTags = [];
+            linkedReviewTags = [];
+            
+            // 重置标签容器
+            const tagContainer = document.getElementById('tagContainer');
+            tagContainer.innerHTML = '<input type="text" class="tag-input" id="tagInput" placeholder="输入灵感词后按Enter添加">';
+            
+            // 隐藏参考复盘ID区域并重置状态
+            const linkedReviewIdElement = document.getElementById('linkedReviewId');
+            const linkedState = document.getElementById('linkedState');
+            const cancelledState = document.getElementById('cancelledState');
+            
+            linkedReviewIdElement.style.display = 'none';
+            if (linkedState) {
+                linkedState.style.display = 'block';
+            }
+            if (cancelledState) {
+                cancelledState.style.display = 'none';
+            }
+            
+            // 清空保存的参考复盘ID
+            savedReferenceId = '';
+            
+            // 清除错误状态
+            clearFormErrors();
+            
+            // 重新初始化标签输入
+            initTagInput();
+        }
+
+        function applyReviewData() {
+            // 获取最新的复盘ID
+            const latestReviewedCard = document.querySelector('[data-status="reviewed"] .kanban-card');
+            if (latestReviewedCard && latestReviewedCard.dataset.reviewId) {
+                const reviewId = latestReviewedCard.dataset.reviewId;
+                
+                // 显示参考复盘ID区域
+                const linkedReviewIdElement = document.getElementById('linkedReviewId');
+                const linkedReviewIdValue = document.getElementById('linkedReviewIdValue');
+                const linkedState = document.getElementById('linkedState');
+                const cancelledState = document.getElementById('cancelledState');
+                
+                // 保存参考复盘ID
+                savedReferenceId = reviewId;
+                
+                // 显示整个参考复盘ID容器
+                linkedReviewIdElement.style.display = 'block';
+                
+                // 设置参考复盘ID值
+                linkedReviewIdValue.textContent = reviewId;
+                
+                // 显示正常关联状态，隐藏取消关联状态
+                if (linkedState) {
+                    linkedState.style.display = 'block';
+                }
+                if (cancelledState) {
+                    cancelledState.style.display = 'none';
+                }
+            }
+        }
+
+
+
+        // 标签输入功能
+        function initTagInput() {
+            const tagInput = document.getElementById('tagInput');
+            if (!tagInput) return;
+            
+            const tagContainer = document.getElementById('tagContainer');
+            
+            tagInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tagText = this.value.trim();
+                    if (tagText && !currentTags.includes(tagText)) {
+                        currentTags.push(tagText);
+                        const tagElement = createTagElement(tagText, false, true);
+                        tagContainer.insertBefore(tagElement, tagInput);
+                        this.value = '';
+                    }
+                }
+            });
+        }
+
+        function createTagElement(tagText, isReviewTag = false, removable = true) {
+            const tagElement = document.createElement('div');
+            tagElement.className = isReviewTag ? 'tag-item review-tag' : 'tag-item';
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = tagText;
+            tagElement.appendChild(textSpan);
+            
+            if (removable) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'tag-remove';
+                removeBtn.innerHTML = '×';
+                removeBtn.type = 'button';
+                removeBtn.onclick = function() {
+                    if (isReviewTag) {
+                        linkedReviewTags = linkedReviewTags.filter(tag => tag !== tagText);
+                        if (linkedReviewTags.length === 0) {
+                            document.getElementById('linkedTags').style.display = 'none';
+                        }
+                    } else {
+                        currentTags = currentTags.filter(tag => tag !== tagText);
+                    }
+                    tagElement.remove();
+                };
+                tagElement.appendChild(removeBtn);
+            }
+            
+            return tagElement;
+        }
+
+        // 表单验证
+        function initFormValidation() {
+            const form = document.getElementById('demandForm');
+            const inputs = form.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('change', validateField);
+            });
+        }
+
+        function validateField(e) {
+            const field = e.target;
+            const fieldName = field.name || field.id;
+            let isValid = true;
+            let errorMessage = '';
+            
+            switch (fieldName) {
+                case 'target_audience':
+                    const selectedRadio = document.querySelector('input[name="target_audience"]:checked');
+                    isValid = selectedRadio !== null;
+                    errorMessage = '请选择目标人群';
+                    break;
+                case 'category':
+                    isValid = field.value.trim().length > 0;
+                    errorMessage = '请选择品类';
+                    break;
+                case 'price_min':
+                case 'price_max':
+                    const minPrice = parseFloat(document.getElementById('price_min').value) || 0;
+                    const maxPrice = parseFloat(document.getElementById('price_max').value) || 0;
+                    if (minPrice > 0 && maxPrice > 0) {
+                        isValid = maxPrice >= minPrice;
+                        errorMessage = '价格区间有误，最高价应大于等于最低价';
+                    }
+                    break;
+            }
+            
+            const errorElement = document.getElementById(fieldName + '_error');
+            if (errorElement) {
+                if (isValid) {
+                    field.classList.remove('error');
+                    errorElement.classList.remove('show');
+                } else {
+                    field.classList.add('error');
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.add('show');
+                }
+            }
+            
+            return isValid;
+        }
+
+        function validateForm() {
+            let isValid = true;
+            
+            // 验证目标人群
+            const gender = document.getElementById('gender').value;
+            const ageRange = document.getElementById('age_range').value;
+            const targetDescription = document.getElementById('target_description').value.trim();
+            
+            if (!gender || !ageRange) {
+                isValid = false;
+                const errorElement = document.getElementById('target_audience_error');
+                errorElement.textContent = '请选择性别和年龄范围';
+                errorElement.classList.add('show');
+            }
+            
+            // 验证品类
+            const category = document.getElementById('category');
+            if (!category.value.trim()) {
+                isValid = false;
+                category.classList.add('error');
+                const errorElement = document.getElementById('category_error');
+                errorElement.textContent = '请选择品类';
+                errorElement.classList.add('show');
+            }
+            
+            // 验证价格区间
+            const minPrice = parseFloat(document.getElementById('price_min').value) || 0;
+            const maxPrice = parseFloat(document.getElementById('price_max').value) || 0;
+            if (minPrice > 0 && maxPrice > 0 && maxPrice < minPrice) {
+                isValid = false;
+                const errorElement = document.getElementById('price_error');
+                errorElement.textContent = '价格区间有误，最高价应大于等于最低价';
+                errorElement.classList.add('show');
+            }
+            
+            return isValid;
+        }
+
+        function clearFormErrors() {
+            const errorMessages = document.querySelectorAll('.error-message');
+            const errorFields = document.querySelectorAll('.form-control.error');
+            
+            errorMessages.forEach(error => error.classList.remove('show'));
+            errorFields.forEach(field => field.classList.remove('error'));
+        }
+
+        function submitForm() {
+            clearFormErrors();
+            
+            if (!validateForm()) {
+                showNotification('请填写完整信息', 'error');
+                return;
+            }
+            
+            // 收集表单数据
+            const gender = document.getElementById('gender').value;
+            const ageRange = document.getElementById('age_range').value;
+            const targetDescription = document.getElementById('target_description').value.trim();
+            
+            // 组合目标人群信息
+            let targetAudience = `${gender}，${ageRange}`;
+            if (targetDescription) {
+                targetAudience += `，${targetDescription}`;
+            }
+            
+            const formData = {
+                gender: gender,
+                ageRange: ageRange,
+                targetDescription: targetDescription,
+                targetAudience: targetAudience,
+                category: document.getElementById('category').value,
+                priceMin: document.getElementById('price_min').value,
+                priceMax: document.getElementById('price_max').value,
+                currencyMin: document.getElementById('currency_min').value,
+                currencyMax: document.getElementById('currency_max').value,
+                tags: [...currentTags]
+            };
+            
+            // 模拟提交成功
+            showNotification('需求提交成功！新卡片已添加到看板', 'success');
+            
+            // 关闭弹框
+            closeDrawer();
+            
+            // 模拟添加新卡片到看板
+            addNewDemandCard(formData);
+        }
+
+        function addNewDemandCard(formData) {
+            const pendingColumn = document.getElementById('pending-column') || 
+                                  document.querySelector('[data-status="pending"] .kanban-column-content');
+            
+            if (pendingColumn) {
+                // 移除占位符
+                const placeholder = pendingColumn.querySelector('.empty-placeholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                
+                // 创建新卡片
+                const newCard = document.createElement('div');
+                newCard.className = 'kanban-card';
+                newCard.draggable = true;
+                newCard.dataset.id = 'NEW_' + Date.now();
+                
+                const priceText = formData.priceMin && formData.priceMax ? 
+                    `${formData.currencyMin}${formData.priceMin}-${formData.currencyMax}${formData.priceMax}` : '未设置';
+                
+                const now = new Date();
+                const timeString = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                
+                // 检查是否有参考复盘ID（从应用按钮进入时）
+                const reviewIdSection = isFromApplyButton ? `
+                    <div class="card-review-id">
+                        <span class="field-label">参考复盘ID:</span>
+                        <span class="field-value review-id-value">${getCurrentReviewId()}</span>
+                    </div>
+                ` : `
+                    <div class="card-review-id" style="display: none;">
+                        <span class="field-label">参考复盘ID:</span>
+                        <span class="field-value review-id-value"></span>
+                    </div>
+                `;
+                
+                newCard.innerHTML = `
+                    <div class="card-status status-pending">待确认</div>
+                    <div class="card-field">
+                        <span class="field-label">目标人群:</span>
+                        <span class="field-value">${formData.targetAudience || '未设置'}</span>
+                    </div>
+                    <div class="card-field">
+                        <span class="field-label">品类:</span>
+                        <span class="field-value">${formData.category || '未设置'}</span>
+                    </div>
+                    <div class="card-field">
+                        <span class="field-label">价位带:</span>
+                        <span class="field-value">${priceText}</span>
+                    </div>
+                    ${reviewIdSection}
+                    <div class="card-update-time">更新: ${timeString}</div>
+                    <div class="card-action-buttons">
+                        <button class="card-action-btn card-edit-btn" onclick="editCard('${newCard.dataset.id}')">编辑</button>
+                        <button class="card-delete-btn" onclick="deleteCard('${newCard.dataset.id}')">删除</button>
+                    </div>
+                `;
+                
+                pendingColumn.appendChild(newCard);
+                
+                // 按时间排序
+                sortKanbanCards();
+                
+                // 更新列计数
+                updateColumnCounts();
+                
+                // 重新初始化拖拽功能
+                initDragAndDrop();
+                
+                // 应用当前角色权限到新卡片
+                applyRolePermissions(currentRole);
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'error' ? '#ea4335' : '#1a73e8';
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${bgColor};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 2000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                animation: slideInTop 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutTop 0.3s ease-in';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 展开/收起功能
+        function toggleExpand(textId, button) {
+            const textElement = document.getElementById(textId);
+            const isCollapsed = textElement.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                textElement.classList.remove('collapsed');
+                button.textContent = '收起';
+            } else {
+                textElement.classList.add('collapsed');
+                button.textContent = '展开';
+            }
+        }
+
+        // 按时间排序看板卡片
+        function sortKanbanCards() {
+            const columns = document.querySelectorAll('.kanban-column');
+            
+            columns.forEach(column => {
+                const columnContent = column.querySelector('.kanban-column-content');
+                const cards = Array.from(columnContent.querySelectorAll('.kanban-card'));
+                
+                // 按更新时间排序（从晚到早）
+                cards.sort((a, b) => {
+                    const timeA = a.querySelector('.card-update-time').textContent.replace('更新: ', '');
+                    const timeB = b.querySelector('.card-update-time').textContent.replace('更新: ', '');
+                    return new Date(timeB) - new Date(timeA);
+                });
+                
+                // 重新排列卡片
+                cards.forEach(card => {
+                    columnContent.appendChild(card);
+                });
+            });
+        }
+
+        // 生成复盘ID
+        function generateReviewId() {
+            const now = new Date();
+            const year = now.getFullYear().toString();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            
+            return `${year}${month}${day}${randomNum}`;
+        }
+
+        // 为已复盘卡片生成复盘ID
+        function generateReviewIds() {
+            const reviewedCards = document.querySelectorAll('[data-status="reviewed"] .kanban-card');
+            
+            reviewedCards.forEach(card => {
+                if (!card.dataset.reviewId) {
+                    const reviewId = generateReviewId();
+                    card.dataset.reviewId = reviewId;
+                    
+                    // 在卡片中添加复盘ID显示
+                    const updateTimeElement = card.querySelector('.card-update-time');
+                    if (updateTimeElement) {
+                        const reviewIdElement = document.createElement('div');
+                        reviewIdElement.className = 'card-review-id';
+                        reviewIdElement.textContent = `复盘ID: ${reviewId}`;
+                        updateTimeElement.insertAdjacentElement('afterend', reviewIdElement);
+                    }
+                }
+            });
+        }
+
+        // 在复盘区域显示复盘ID
+        function displayReviewId() {
+            const reviewTitle = document.querySelector('.review-title');
+            if (reviewTitle && !reviewTitle.querySelector('.review-id')) {
+                // 获取最新的复盘ID（取已复盘卡片中的第一个）
+                const latestReviewedCard = document.querySelector('[data-status="reviewed"] .kanban-card');
+                if (latestReviewedCard && latestReviewedCard.dataset.reviewId) {
+                    const reviewIdSpan = document.createElement('span');
+                    reviewIdSpan.className = 'review-id';
+                    reviewIdSpan.textContent = `(ID: ${latestReviewedCard.dataset.reviewId})`;
+                    reviewTitle.appendChild(reviewIdSpan);
+                }
+            }
+        }
+
+        // 为单个卡片生成复盘ID
+        function generateReviewIdForCard(card) {
+            if (!card.dataset.reviewId) {
+                const reviewId = generateReviewId();
+                card.dataset.reviewId = reviewId;
+                
+                // 在卡片中添加复盘ID显示
+                const updateTimeElement = card.querySelector('.card-update-time');
+                if (updateTimeElement) {
+                    // 如果已经有复盘ID显示，先移除（只移除复盘ID，不移除参考复盘ID）
+                    const existingReviewIdElements = card.querySelectorAll('.card-review-id');
+                    existingReviewIdElements.forEach(element => {
+                        const label = element.querySelector('.field-label');
+                        // 只移除"复盘ID"字段，保留"参考复盘ID"字段
+                        if (label && label.textContent.includes('复盘ID:') && !label.textContent.includes('参考复盘ID')) {
+                            element.remove();
+                        }
+                    });
+                    
+                    const reviewIdElement = document.createElement('div');
+                    reviewIdElement.className = 'card-review-id';
+                    reviewIdElement.innerHTML = `
+                        <span class="field-label">复盘ID:</span>
+                        <span class="field-value">${reviewId}</span>
+                    `;
+                    updateTimeElement.insertAdjacentElement('afterend', reviewIdElement);
+                }
+                
+                // 更新复盘区域的ID显示
+                updateReviewAreaId(reviewId);
+            }
+        }
+
+        // 更新卡片时间戳
+        function updateCardTimestamp(card) {
+            const updateTimeElement = card.querySelector('.card-update-time');
+            if (updateTimeElement) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                const day = now.getDate().toString().padStart(2, '0');
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                
+                updateTimeElement.textContent = `更新: ${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // 更新复盘区域ID显示
+        function updateReviewAreaId(reviewId) {
+            const reviewTitle = document.querySelector('.review-title');
+            const existingReviewId = reviewTitle.querySelector('.review-id');
+            
+            if (existingReviewId) {
+                existingReviewId.textContent = `(ID: ${reviewId})`;
+            } else {
+                const reviewIdSpan = document.createElement('span');
+                reviewIdSpan.className = 'review-id';
+                reviewIdSpan.textContent = `(ID: ${reviewId})`;
+                reviewTitle.appendChild(reviewIdSpan);
+            }
+        }
+
+        // 初始化字符计数器
+        function initCharCounter() {
+            const targetDescription = document.getElementById('target_description');
+            const charCount = document.getElementById('target_description_count');
+            
+            if (targetDescription && charCount) {
+                targetDescription.addEventListener('input', function() {
+                    const currentLength = this.value.length;
+                    charCount.textContent = currentLength;
+                    
+                    // 接近限制时改变颜色
+                    if (currentLength > 80) {
+                        charCount.style.color = '#ea4335';
+                    } else if (currentLength > 60) {
+                        charCount.style.color = '#f9ab00';
+                    } else {
+                        charCount.style.color = '#5f6368';
+                    }
+                });
+            }
+        }
+
+        // 删除卡片
+        function deleteCard(cardId) {
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            const cardStatus = card ? card.closest('.kanban-column').dataset.status : null;
+            
+            if (!checkButtonPermission('delete', cardStatus)) {
+                const roleName = getRoleDisplayName(currentRole);
+                showNotification(`${roleName}角色无权限删除此卡片`, 'error');
+                return;
+            }
+            
+            if (confirm('确定要删除这张卡片吗？')) {
+                if (card) {
+                    card.remove();
+                    updateColumnCounts();
+                    showNotification('卡片已删除', 'success');
+                }
+            }
+        }
+
+        // 编辑卡片（待确认列）
+        function editCard(cardId) {
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            const cardStatus = card ? card.closest('.kanban-column').dataset.status : null;
+            
+            if (!checkButtonPermission('edit', cardStatus)) {
+                const roleName = getRoleDisplayName(currentRole);
+                showNotification(`${roleName}角色无权限编辑此卡片`, 'error');
+                return;
+            }
+            
+            showNotification(`编辑卡片 ID: ${cardId}`, 'info');
+            // TODO: 实现编辑卡片功能
+            console.log('编辑卡片:', cardId);
+        }
+
+        // 上传设计稿（设计中列）
+        function uploadDesign(cardId) {
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            const cardStatus = card ? card.closest('.kanban-column').dataset.status : null;
+            
+            if (!checkButtonPermission('uploadDesign', cardStatus)) {
+                const roleName = getRoleDisplayName(currentRole);
+                showNotification(`${roleName}角色无权限上传设计稿`, 'error');
+                return;
+            }
+            
+            showNotification(`上传设计稿 ID: ${cardId}`, 'info');
+            // TODO: 实现上传设计稿功能
+            console.log('上传设计稿:', cardId);
+        }
+
+        // 修改设计稿（已交付列）
+        function modifyDesign(cardId) {
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            const cardStatus = card ? card.closest('.kanban-column').dataset.status : null;
+            
+            if (!checkButtonPermission('modifyDesign', cardStatus)) {
+                const roleName = getRoleDisplayName(currentRole);
+                showNotification(`${roleName}角色无权限修改设计稿`, 'error');
+                return;
+            }
+            
+            showNotification(`修改设计稿 ID: ${cardId}`, 'info');
+            // TODO: 实现修改设计稿功能
+            console.log('修改设计稿:', cardId);
+        }
+
+        // 上传复盘数据（预售测试列）
+        function uploadReviewData(cardId) {
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            const cardStatus = card ? card.closest('.kanban-column').dataset.status : null;
+            
+            if (!checkButtonPermission('uploadReviewData', cardStatus)) {
+                const roleName = getRoleDisplayName(currentRole);
+                showNotification(`${roleName}角色无权限上传复盘数据`, 'error');
+                return;
+            }
+            
+            showNotification(`上传复盘数据 ID: ${cardId}`, 'info');
+            // TODO: 实现上传复盘数据功能
+            console.log('上传复盘数据:', cardId);
+        }
+
+        // 修改复盘数据（已复盘列）
+        function modifyReviewData(cardId) {
+            const card = document.querySelector(`[data-id="${cardId}"]`);
+            const cardStatus = card ? card.closest('.kanban-column').dataset.status : null;
+            
+            if (!checkButtonPermission('modifyReviewData', cardStatus)) {
+                const roleName = getRoleDisplayName(currentRole);
+                showNotification(`${roleName}角色无权限修改复盘数据`, 'error');
+                return;
+            }
+            
+            showNotification(`修改复盘数据 ID: ${cardId}`, 'info');
+            // TODO: 实现修改复盘数据功能
+            console.log('修改复盘数据:', cardId);
+        }
+
+        // 获取当前最新复盘ID
+        function getCurrentReviewId() {
+            const latestReviewedCard = document.querySelector('[data-status="reviewed"] .kanban-card');
+            return latestReviewedCard && latestReviewedCard.dataset.reviewId ? 
+                   latestReviewedCard.dataset.reviewId : '20241215001';
+        }
+
+        // 取消参考复盘ID关联
+        let savedReferenceId = ''; // 保存被取消的参考复盘ID，用于恢复
+        
+        function cancelReference(event) {
+            // 阻止事件冒泡，防止触发弹框关闭
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            
+            console.log('取消参考复盘ID关联');
+            
+            // 保存当前的参考复盘ID以便恢复
+            const linkedReviewIdValue = document.getElementById('linkedReviewIdValue');
+            if (linkedReviewIdValue) {
+                savedReferenceId = linkedReviewIdValue.textContent;
+            }
+            
+            // 隐藏正常关联状态
+            const linkedState = document.getElementById('linkedState');
+            if (linkedState) {
+                linkedState.style.display = 'none';
+            }
+            
+            // 显示取消关联状态
+            const cancelledState = document.getElementById('cancelledState');
+            if (cancelledState) {
+                cancelledState.style.display = 'flex';
+            }
+            
+            console.log(`已取消参考复盘ID关联: ${savedReferenceId}`);
+            showNotification('已取消参考复盘ID关联', 'success');
+        }
+
+        // 重新关联参考复盘ID
+        function restoreReference(event) {
+            // 阻止事件冒泡，防止触发弹框关闭
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            
+            console.log('重新关联参考复盘ID');
+            
+            // 恢复参考复盘ID值
+            const linkedReviewIdValue = document.getElementById('linkedReviewIdValue');
+            if (linkedReviewIdValue && savedReferenceId) {
+                linkedReviewIdValue.textContent = savedReferenceId;
+            }
+            
+            // 隐藏取消关联状态
+            const cancelledState = document.getElementById('cancelledState');
+            if (cancelledState) {
+                cancelledState.style.display = 'none';
+            }
+            
+            // 显示正常关联状态
+            const linkedState = document.getElementById('linkedState');
+            if (linkedState) {
+                linkedState.style.display = 'block';
+            }
+            
+            console.log(`已重新关联参考复盘ID: ${savedReferenceId}`);
+            showNotification(`已重新关联参考复盘ID: ${savedReferenceId}`, 'success');
+        }
+
+        // ========== 角色权限管理功能 ==========
+        
+        // 初始化角色管理
+        function initRoleManagement() {
+            console.log('=== 初始化角色管理系统 ===');
+            
+            const roleSelect = document.getElementById('roleSelect');
+            if (!roleSelect) {
+                console.error('未找到角色选择器元素 #roleSelect');
+                return;
+            }
+            
+            console.log('找到角色选择器，当前选中值:', roleSelect.value);
+            console.log('当前全局角色变量:', currentRole);
+            
+            // 确保当前角色与选择器值同步
+            currentRole = roleSelect.value || 'client';
+            roleSelect.value = currentRole; // 确保选择器显示正确值
+            
+            console.log('同步后的角色值:', currentRole);
+            
+            // 移除可能存在的旧事件监听器（避免重复绑定）
+            roleSelect.removeEventListener('change', handleRoleChange);
+            roleSelect.addEventListener('change', handleRoleChange);
+            console.log('事件监听器绑定完成');
+            
+            // 立即应用初始角色权限
+            console.log('应用初始角色权限...');
+            applyRolePermissions(currentRole);
+            
+            console.log('=== 角色管理系统初始化完成 ===');
+        }
+
+        // 处理角色切换
+        function handleRoleChange(event) {
+            const newRole = event.target.value;
+            console.log('=== 开始角色切换 ===');
+            console.log('从角色:', currentRole, '切换到:', newRole);
+            
+            currentRole = newRole;
+            console.log('当前角色已更新为:', currentRole);
+            
+            // 强制重新应用权限
+            applyRolePermissions(currentRole);
+            
+            // 验证切换结果
+            setTimeout(() => {
+                verifyRoleSwitch(currentRole);
+            }, 50);
+            
+            showNotification(`已切换至${getRoleDisplayName(currentRole)}角色`, 'success');
+            console.log('=== 角色切换完成 ===');
+        }
+
+        // 应用角色权限
+        function applyRolePermissions(role) {
+            console.log('应用角色权限:', role);
+            
+            // 根据角色显示/隐藏元素
+            toggleElementsByRole(role);
+            
+            // 根据角色控制拖拽功能
+            updateDragDropPermissions(role);
+            
+            // 根据角色控制按钮操作
+            updateButtonPermissions(role);
+        }
+
+        // 根据角色显示/隐藏元素
+        function toggleElementsByRole(role) {
+            console.log('=== 开始应用角色权限 ===');
+            console.log('目标角色:', role);
+            
+            // 获取所有需要控制的元素
+            const elements = {
+                newDemandBtn: document.getElementById('newDemandBtn'),
+                applyBtn: document.getElementById('applyBtn'),
+                pendingEditBtns: document.querySelectorAll('[data-status="pending"] .card-edit-btn'),
+                pendingDeleteBtns: document.querySelectorAll('[data-status="pending"] .card-delete-btn'),
+                uploadDesignBtns: document.querySelectorAll('.card-upload-btn'),
+                uploadDataBtns: document.querySelectorAll('.card-upload-btn'),
+                modifyDataBtns: document.querySelectorAll('.card-modify-btn'),
+                modifyDesignBtns: document.querySelectorAll('.card-modify-design-btn')
+            };
+            
+            // 过滤上传按钮类型 - 使用更可靠的方法
+            elements.uploadDesignBtns = Array.from(elements.uploadDesignBtns).filter(btn => 
+                btn.textContent && btn.textContent.includes('上传设计稿')
+            );
+            elements.uploadDataBtns = Array.from(elements.uploadDataBtns).filter(btn => 
+                btn.textContent && btn.textContent.includes('上传复盘数据')
+            );
+            
+            console.log('找到的元素数量:');
+            console.log('- 新增需求按钮:', elements.newDemandBtn ? 1 : 0);
+            console.log('- 应用按钮:', elements.applyBtn ? 1 : 0);
+            console.log('- 待确认编辑按钮:', elements.pendingEditBtns.length);
+            console.log('- 待确认删除按钮:', elements.pendingDeleteBtns.length);
+            console.log('- 上传设计稿按钮:', elements.uploadDesignBtns.length);
+            console.log('- 上传复盘数据按钮:', elements.uploadDataBtns.length);
+            console.log('- 修改复盘数据按钮:', elements.modifyDataBtns.length);
+            console.log('- 修改设计稿按钮:', elements.modifyDesignBtns.length);
+
+            // 先隐藏所有元素
+            const allElements = [
+                elements.newDemandBtn,
+                elements.applyBtn,
+                ...elements.pendingEditBtns,
+                ...elements.pendingDeleteBtns,
+                ...elements.uploadDesignBtns,
+                ...elements.uploadDataBtns,
+                ...elements.modifyDataBtns,
+                ...elements.modifyDesignBtns
+            ].filter(el => el); // 过滤掉null/undefined
+            
+            console.log('隐藏所有元素...');
+            allElements.forEach(el => hideElement(el));
+
+            // 根据角色显示对应元素
+            switch(role) {
+                case 'client':
+                    console.log('应用客户角色权限...');
+                    if (elements.newDemandBtn) showElement(elements.newDemandBtn);
+                    if (elements.applyBtn) showElement(elements.applyBtn);
+                    elements.pendingEditBtns.forEach(btn => showElement(btn));
+                    elements.pendingDeleteBtns.forEach(btn => showElement(btn));
+                    console.log('客户角色权限应用完成');
+                    break;
+                    
+                case 'designer':
+                    console.log('应用设计师角色权限...');
+                    elements.uploadDesignBtns.forEach(btn => showElement(btn));
+                    elements.modifyDesignBtns.forEach(btn => showElement(btn));
+                    console.log('设计师角色权限应用完成');
+                    break;
+                    
+                case 'operator':
+                    console.log('应用运营角色权限...');
+                    elements.uploadDataBtns.forEach(btn => showElement(btn));
+                    elements.modifyDataBtns.forEach(btn => showElement(btn));
+                    console.log('运营角色权限应用完成');
+                    break;
+                    
+                default:
+                    console.warn('未知角色:', role);
+            }
+            
+            console.log('=== 角色权限应用完成 ===');
+        }
+
+        // 更新拖拽权限
+        function updateDragDropPermissions(role) {
+            const allCards = document.querySelectorAll('.kanban-card');
+            
+            allCards.forEach(card => {
+                const column = card.closest('.kanban-column');
+                const status = column.dataset.status;
+                
+                switch(role) {
+                    case 'client':
+                        // 客户不可拖拽任何卡片
+                        card.draggable = false;
+                        card.style.cursor = 'default';
+                        break;
+                        
+                    case 'designer':
+                        // 设计师不可拖拽预售测试和已复盘卡片
+                        if (status === 'testing' || status === 'reviewed') {
+                            card.draggable = false;
+                            card.style.cursor = 'default';
+                        } else {
+                            card.draggable = true;
+                            card.style.cursor = 'grab';
+                        }
+                        break;
+                        
+                    case 'operator':
+                        // 运营可以拖拽所有卡片
+                        card.draggable = true;
+                        card.style.cursor = 'grab';
+                        break;
+                }
+            });
+        }
+
+        // 更新按钮权限
+        function updateButtonPermissions(role) {
+            // 这里可以添加更多的按钮权限控制逻辑
+            console.log('更新按钮权限:', role);
+        }
+
+        // 显示元素
+        function showElement(element) {
+            if (element) {
+                element.style.display = '';
+                element.style.visibility = 'visible';
+                console.log('显示元素:', element.id || element.className || element.textContent?.substring(0, 20));
+            } else {
+                console.warn('尝试显示的元素不存在');
+            }
+        }
+
+        // 隐藏元素
+        function hideElement(element) {
+            if (element) {
+                element.style.display = 'none';
+                console.log('隐藏元素:', element.id || element.className || element.textContent?.substring(0, 20));
+            } else {
+                console.warn('尝试隐藏的元素不存在');
+            }
+        }
+
+        // 验证角色切换结果
+        function verifyRoleSwitch(role) {
+            console.log('=== 验证角色切换结果 ===');
+            console.log('验证角色:', role);
+            
+            const elements = {
+                newDemandBtn: document.getElementById('newDemandBtn'),
+                applyBtn: document.getElementById('applyBtn')
+            };
+            
+            // 检查主要按钮
+            Object.keys(elements).forEach(key => {
+                const element = elements[key];
+                if (element) {
+                    const displayStyle = getComputedStyle(element).display;
+                    const isVisible = displayStyle !== 'none';
+                    console.log(`${key}: ${isVisible ? '显示' : '隐藏'} (display: ${displayStyle})`);
+                } else {
+                    console.log(`${key}: 元素未找到`);
+                }
+            });
+            
+            // 检查上传按钮
+            const allUploadBtns = document.querySelectorAll('.card-upload-btn');
+            console.log(`找到 ${allUploadBtns.length} 个上传按钮`);
+            
+            allUploadBtns.forEach((btn, index) => {
+                const displayStyle = getComputedStyle(btn).display;
+                const isVisible = displayStyle !== 'none';
+                const buttonText = btn.textContent || btn.innerText || 'Unknown';
+                console.log(`上传按钮${index + 1} [${buttonText}]: ${isVisible ? '显示' : '隐藏'}`);
+            });
+            
+            // 检查修改按钮
+            const modifyBtns = document.querySelectorAll('.card-modify-btn');
+            modifyBtns.forEach((btn, index) => {
+                const displayStyle = getComputedStyle(btn).display;
+                const isVisible = displayStyle !== 'none';
+                console.log(`修改按钮${index + 1}: ${isVisible ? '显示' : '隐藏'}`);
+            });
+            
+            console.log('=== 验证完成 ===');
+        }
+
+        // 手动测试角色权限（用于调试）
+        window.testRolePermissions = function(role) {
+            console.log('=== 手动测试角色权限 ===');
+            console.log('测试角色:', role);
+            currentRole = role;
+            const roleSelect = document.getElementById('roleSelect');
+            if (roleSelect) {
+                roleSelect.value = role;
+            }
+            applyRolePermissions(role);
+            setTimeout(() => {
+                verifyRoleSwitch(role);
+            }, 100);
+        };
+
+        // 测试卡片状态变更后的权限应用（用于调试）
+        window.testCardStateChange = function() {
+            console.log('=== 测试卡片状态变更权限应用 ===');
+            
+            // 模拟从待确认拖拽到设计中的情况
+            console.log('模拟场景：待确认卡片拖拽到设计中状态');
+            console.log('当前角色:', getRoleDisplayName(currentRole));
+            
+            // 应用设计师权限
+            if (currentRole !== 'designer') {
+                console.log('切换到设计师角色进行测试...');
+                currentRole = 'designer';
+                const roleSelect = document.getElementById('roleSelect');
+                if (roleSelect) {
+                    roleSelect.value = 'designer';
+                }
+            }
+            
+            console.log('重新应用角色权限...');
+            applyRolePermissions(currentRole);
+            
+            setTimeout(() => {
+                console.log('验证设计中列的上传设计稿按钮显示状态:');
+                const uploadDesignBtns = document.querySelectorAll('.card-upload-btn');
+                let designBtnCount = 0;
+                uploadDesignBtns.forEach((btn, index) => {
+                    if (btn.textContent && btn.textContent.includes('上传设计稿')) {
+                        designBtnCount++;
+                        const displayStyle = getComputedStyle(btn).display;
+                        const isVisible = displayStyle !== 'none';
+                        console.log(`上传设计稿按钮${designBtnCount}: ${isVisible ? '✅ 显示' : '❌ 隐藏'}`);
+                    }
+                });
+                if (designBtnCount === 0) {
+                    console.log('❌ 未找到上传设计稿按钮');
+                }
+            }, 100);
+        };
+
+        // 测试状态变更功能（模拟拖拽）
+        window.testDragStateChange = function() {
+            console.log('=== 测试拖拽状态变更功能 ===');
+            
+            // 找到第一张待确认的卡片
+            const pendingCard = document.querySelector('[data-status="pending"] .kanban-card');
+            if (!pendingCard) {
+                console.log('❌ 未找到待确认状态的卡片');
+                return;
+            }
+            
+            console.log('找到待确认卡片，ID:', pendingCard.dataset.id);
+            console.log('当前卡片操作按钮:');
+            const currentBtns = pendingCard.querySelectorAll('button');
+            currentBtns.forEach(btn => {
+                console.log(`- ${btn.textContent}: ${getComputedStyle(btn).display !== 'none' ? '显示' : '隐藏'}`);
+            });
+            
+            // 模拟将卡片状态变更为设计中
+            console.log('模拟将卡片状态变更为"设计中"...');
+            updateCardStatus(pendingCard, 'designing');
+            
+            // 切换到设计师角色
+            currentRole = 'designer';
+            const roleSelect = document.getElementById('roleSelect');
+            if (roleSelect) {
+                roleSelect.value = 'designer';
+            }
+            
+            // 应用权限
+            applyRolePermissions(currentRole);
+            
+            setTimeout(() => {
+                console.log('状态变更后的卡片操作按钮:');
+                const newBtns = pendingCard.querySelectorAll('button');
+                newBtns.forEach(btn => {
+                    const isVisible = getComputedStyle(btn).display !== 'none';
+                    console.log(`- ${btn.textContent}: ${isVisible ? '✅ 显示' : '❌ 隐藏'}`);
+                });
+                
+                // 检查是否有上传设计稿按钮
+                const uploadDesignBtn = pendingCard.querySelector('button');
+                const hasUploadDesignBtn = Array.from(pendingCard.querySelectorAll('button'))
+                    .some(btn => btn.textContent.includes('上传设计稿'));
+                
+                if (hasUploadDesignBtn) {
+                    console.log('✅ 成功！卡片现在有上传设计稿按钮');
+                } else {
+                    console.log('❌ 失败！卡片缺少上传设计稿按钮');
+                }
+            }, 100);
+        };
+
+        // 测试已交付列修改设计稿功能
+        window.testModifyDesignFeature = function() {
+            console.log('=== 测试已交付列修改设计稿功能 ===');
+            
+            // 切换到设计师角色
+            console.log('切换到设计师角色...');
+            currentRole = 'designer';
+            const roleSelect = document.getElementById('roleSelect');
+            if (roleSelect) {
+                roleSelect.value = 'designer';
+            }
+            
+            // 应用设计师权限
+            applyRolePermissions(currentRole);
+            
+            setTimeout(() => {
+                console.log('验证已交付列的修改设计稿按钮显示状态:');
+                const modifyDesignBtns = document.querySelectorAll('.card-modify-design-btn');
+                
+                if (modifyDesignBtns.length === 0) {
+                    console.log('❌ 未找到修改设计稿按钮');
+                    return;
+                }
+                
+                modifyDesignBtns.forEach((btn, index) => {
+                    const displayStyle = getComputedStyle(btn).display;
+                    const isVisible = displayStyle !== 'none';
+                    const cardId = btn.onclick.toString().match(/'([^']+)'/)?.[1] || 'unknown';
+                    console.log(`修改设计稿按钮${index + 1} (卡片ID: ${cardId}): ${isVisible ? '✅ 显示' : '❌ 隐藏'}`);
+                });
+                
+                // 测试权限验证
+                console.log('测试权限验证...');
+                const testResult = checkButtonPermission('modifyDesign', 'delivered');
+                console.log(`设计师在已交付状态的修改设计稿权限: ${testResult ? '✅ 有权限' : '❌ 无权限'}`);
+                
+                // 测试其他角色权限
+                console.log('测试其他角色权限...');
+                const originalRole = currentRole;
+                
+                currentRole = 'client';
+                const clientResult = checkButtonPermission('modifyDesign', 'delivered');
+                console.log(`客户在已交付状态的修改设计稿权限: ${clientResult ? '✅ 有权限' : '❌ 无权限'}`);
+                
+                currentRole = 'operator';
+                const operatorResult = checkButtonPermission('modifyDesign', 'delivered');
+                console.log(`运营在已交付状态的修改设计稿权限: ${operatorResult ? '✅ 有权限' : '❌ 无权限'}`);
+                
+                // 恢复原角色
+                currentRole = originalRole;
+                
+                console.log('=== 测试完成 ===');
+            }, 100);
+        };
+
+        // 获取角色显示名称
+        function getRoleDisplayName(role) {
+            const roleMap = {
+                'client': '客户',
+                'designer': '设计师',
+                'operator': '运营'
+            };
+            return roleMap[role] || role;
+        }
+
+        // 检查当前角色是否有权限执行某操作
+        function hasPermission(action) {
+            const permissions = {
+                'client': ['newDemand', 'applyReference', 'editPending', 'deletePending'],
+                'designer': ['uploadDesign', 'dragNonRestricted'],
+                'operator': ['uploadReviewData', 'modifyReviewData', 'dragAll']
+            };
+            
+            return permissions[currentRole] && permissions[currentRole].includes(action);
+        }
+
+        // 检查拖拽权限
+        function checkDragPermission(fromStatus, toStatus) {
+            switch(currentRole) {
+                case 'client':
+                    // 客户不可拖拽任何卡片
+                    return false;
+                    
+                case 'designer':
+                    // 设计师不可拖拽预售测试和已复盘状态的卡片
+                    if (fromStatus === 'testing' || fromStatus === 'reviewed' ||
+                        toStatus === 'testing' || toStatus === 'reviewed') {
+                        return false;
+                    }
+                    return true;
+                    
+                case 'operator':
+                    // 运营可以拖拽所有卡片
+                    return true;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        // 检查按钮操作权限
+        function checkButtonPermission(action, cardStatus) {
+            switch(currentRole) {
+                case 'client':
+                    if (action === 'edit' || action === 'delete') {
+                        return cardStatus === 'pending';
+                    }
+                    return false;
+                    
+                case 'designer':
+                    if (action === 'uploadDesign') {
+                        return cardStatus === 'designing';
+                    }
+                    if (action === 'modifyDesign') {
+                        return cardStatus === 'delivered';
+                    }
+                    return false;
+                    
+                case 'operator':
+                    if (action === 'uploadReviewData') {
+                        return cardStatus === 'testing';
+                    }
+                    if (action === 'modifyReviewData') {
+                        return cardStatus === 'reviewed';
+                    }
+                    return false;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInTop {
+                from {
+                    transform: translateX(-50%) translateY(-100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(-50%) translateY(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutTop {
+                from {
+                    transform: translateX(-50%) translateY(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(-50%) translateY(-100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 测试通知功能
+        window.testNotification = function() {
+            console.log('🧪 测试通知功能 - 页面居中上方显示');
+            showNotification('测试成功通知 - 居中上方显示', 'success');
+            setTimeout(() => {
+                showNotification('测试错误通知 - 居中上方显示', 'error');
+            }, 1000);
+            setTimeout(() => {
+                showNotification('测试信息通知 - 居中上方显示', 'info');
+            }, 2000);
+        };
+
+        // 测试参考复盘ID功能
+        window.testReferenceReviewId = function() {
+            console.log('🧪 测试参考复盘ID功能 - 修复版本');
+            
+            // 测试1：创建一个有参考复盘ID的测试卡片，测试状态变更
+            console.log('--- 测试1：状态变更保持参考复盘ID ---');
+            const testCard = document.createElement('div');
+            testCard.className = 'kanban-card';
+            testCard.dataset.id = 'TEST_REF_' + Date.now();
+            testCard.innerHTML = `
+                <div class="card-status status-pending">待确认</div>
+                <div class="card-review-id" style="display: none;">
+                    <span class="field-label">参考复盘ID:</span>
+                    <span class="field-value review-id-value">20241215999</span>
+                </div>
+                <div class="card-update-time">更新: 2025-01-15 10:00:00</div>
+            `;
+            
+            console.log('测试卡片创建完成，参考复盘ID:', testCard.querySelector('.review-id-value').textContent);
+            
+            // 测试状态变更：pending -> designing -> delivered -> testing -> reviewed
+            const statusSequence = ['designing', 'delivered', 'testing', 'reviewed'];
+            let allTestsPassed = true;
+            
+            statusSequence.forEach((status, index) => {
+                console.log(`\n步骤 ${index + 1}: 变更为 ${status} 状态`);
+                updateCardStatus(testCard, status);
+                
+                // 检查参考复盘ID是否可见
+                const referenceElements = testCard.querySelectorAll('.card-review-id');
+                let referenceVisible = false;
+                
+                referenceElements.forEach(element => {
+                    const label = element.querySelector('.field-label');
+                    if (label && label.textContent.includes('参考复盘ID')) {
+                        const computedStyle = getComputedStyle(element);
+                        referenceVisible = computedStyle.display !== 'none';
+                        console.log(`参考复盘ID显示状态: ${referenceVisible ? '可见' : '隐藏'}`);
+                    }
+                });
+                
+                if (!referenceVisible) {
+                    console.log(`❌ 在${status}状态下参考复盘ID不可见`);
+                    allTestsPassed = false;
+                } else {
+                    console.log(`✅ 在${status}状态下参考复盘ID正常显示`);
+                }
+            });
+            
+            // 测试2：检查现有已复盘卡片的参考复盘ID显示
+            console.log('\n--- 测试2：现有已复盘卡片参考复盘ID显示 ---');
+            const existingReviewedCards = document.querySelectorAll('[data-status="reviewed"] .kanban-card');
+            existingReviewedCards.forEach((card, index) => {
+                const referenceElements = card.querySelectorAll('.card-review-id');
+                let hasReferenceId = false;
+                let referenceVisible = false;
+                
+                referenceElements.forEach(element => {
+                    const label = element.querySelector('.field-label');
+                    const value = element.querySelector('.review-id-value');
+                    if (label && label.textContent.includes('参考复盘ID') && value && value.textContent.trim()) {
+                        hasReferenceId = true;
+                        const computedStyle = getComputedStyle(element);
+                        referenceVisible = computedStyle.display !== 'none';
+                    }
+                });
+                
+                console.log(`已复盘卡片 ${index + 1}: 有参考复盘ID=${hasReferenceId}, 可见=${referenceVisible}`);
+            });
+            
+            // 显示测试结果
+            if (allTestsPassed) {
+                console.log('\n✅ 全部测试通过：参考复盘ID在所有状态中都能正常显示');
+                showNotification('参考复盘ID功能测试通过！', 'success');
+            } else {
+                console.log('\n❌ 部分测试失败：参考复盘ID显示存在问题');
+                showNotification('参考复盘ID功能测试失败！', 'error');
+            }
+        };
+
+        // 演示参考复盘ID修复效果
+        window.demoReferenceReviewIdFix = function() {
+            console.log('🎯 演示参考复盘ID修复效果');
+            showNotification('开始演示参考复盘ID修复效果', 'info');
+            
+            // 查找有参考复盘ID的卡片
+            const cardWithReference = document.querySelector('[data-id="2"]');
+            if (!cardWithReference) {
+                console.log('❌ 未找到测试卡片');
+                return;
+            }
+            
+            console.log('找到有参考复盘ID的待确认卡片，开始演示拖拽流程...');
+            
+            // 模拟完整的状态流转
+            const statusFlow = [
+                { status: 'designing', name: '设计中', delay: 2000 },
+                { status: 'delivered', name: '已交付', delay: 4000 },
+                { status: 'testing', name: '预售测试', delay: 6000 },
+                { status: 'reviewed', name: '已复盘', delay: 8000 }
+            ];
+            
+            statusFlow.forEach(({ status, name, delay }) => {
+                setTimeout(() => {
+                    console.log(`\n🔄 将卡片状态变更为: ${name}`);
+                    updateCardStatus(cardWithReference, status);
+                    
+                    // 如果是已复盘状态，模拟生成复盘ID的过程
+                    if (status === 'reviewed') {
+                        generateReviewIdForCard(cardWithReference);
+                    }
+                    
+                    // 检查参考复盘ID和复盘ID的显示情况
+                    const referenceElements = cardWithReference.querySelectorAll('.card-review-id');
+                    let referenceVisible = false;
+                    let referenceValue = '';
+                    let reviewIdVisible = false;
+                    let reviewIdValue = '';
+                    
+                    referenceElements.forEach(element => {
+                        const label = element.querySelector('.field-label');
+                        if (label) {
+                            if (label.textContent.includes('参考复盘ID')) {
+                                const value = element.querySelector('.review-id-value');
+                                if (value && value.textContent.trim()) {
+                                    referenceVisible = getComputedStyle(element).display !== 'none';
+                                    referenceValue = value.textContent.trim();
+                                }
+                            } else if (label.textContent.includes('复盘ID:') && !label.textContent.includes('参考')) {
+                                const value = element.querySelector('.field-value');
+                                if (value && value.textContent.trim()) {
+                                    reviewIdVisible = getComputedStyle(element).display !== 'none';
+                                    reviewIdValue = value.textContent.trim();
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (status === 'reviewed') {
+                        console.log(`📊 已复盘状态检查结果:`);
+                        console.log(`   参考复盘ID: ${referenceVisible ? '✅ 显示' : '❌ 隐藏'} - ${referenceValue}`);
+                        console.log(`   复盘ID: ${reviewIdVisible ? '✅ 显示' : '❌ 隐藏'} - ${reviewIdValue}`);
+                        
+                        if (referenceVisible && reviewIdVisible) {
+                            showNotification(`✅ 修复成功！参考复盘ID(${referenceValue}) 和 复盘ID(${reviewIdValue}) 同时显示`, 'success');
+                        } else if (referenceVisible && !reviewIdVisible) {
+                            showNotification(`⚠️ 参考复盘ID显示正常，但复盘ID未生成`, 'error');
+                        } else if (!referenceVisible && reviewIdVisible) {
+                            showNotification(`❌ 复盘ID生成成功，但参考复盘ID丢失！`, 'error');
+                        } else {
+                            showNotification(`❌ 参考复盘ID和复盘ID都丢失！`, 'error');
+                        }
+                    } else {
+                        if (referenceVisible) {
+                            console.log(`✅ 在${name}状态下，参考复盘ID仍然可见: ${referenceValue}`);
+                            showNotification(`${name}状态 - 参考复盘ID保持显示: ${referenceValue}`, 'success');
+                        } else {
+                            console.log(`❌ 在${name}状态下，参考复盘ID不可见`);
+                            showNotification(`${name}状态 - 参考复盘ID丢失!`, 'error');
+                        }
+                    }
+                    
+                    if (status === 'reviewed') {
+                        setTimeout(() => {
+                            console.log('\n🎉 演示完成！');
+                            if (referenceVisible && reviewIdVisible) {
+                                console.log('✅ 参考复盘ID修复成功：参考复盘ID和复盘ID在已复盘状态下同时显示');
+                                showNotification('🎉 参考复盘ID修复成功！', 'success');
+                            } else {
+                                console.log('❌ 参考复盘ID修复仍有问题，需要进一步调试');
+                                showNotification('❌ 参考复盘ID修复失败', 'error');
+                            }
+                        }, 1500);
+                    }
+                }, delay);
+            });
+        };
+
+        // 测试参考复盘ID在已复盘状态的保持
+        window.testReviewedStatusReferenceId = function() {
+            console.log('🧪 测试参考复盘ID在已复盘状态的保持');
+            showNotification('测试参考复盘ID在已复盘状态的保持', 'info');
+            
+            // 查找有参考复盘ID的卡片
+            const cardWithReference = document.querySelector('[data-id="2"]');
+            if (!cardWithReference) {
+                console.log('❌ 未找到测试卡片');
+                showNotification('未找到测试卡片', 'error');
+                return;
+            }
+            
+            console.log('📋 开始测试...');
+            console.log('步骤1: 检查卡片初始状态');
+            
+            // 检查初始状态的参考复盘ID
+            let initialReferenceId = '';
+            const initialElements = cardWithReference.querySelectorAll('.card-review-id');
+            initialElements.forEach(element => {
+                const label = element.querySelector('.field-label');
+                const value = element.querySelector('.review-id-value');
+                if (label && label.textContent.includes('参考复盘ID') && value && value.textContent.trim()) {
+                    initialReferenceId = value.textContent.trim();
+                }
+            });
+            
+            console.log(`初始参考复盘ID: ${initialReferenceId}`);
+            
+            // 直接将卡片状态变更为已复盘
+            console.log('步骤2: 将卡片状态直接变更为已复盘');
+            updateCardStatus(cardWithReference, 'reviewed');
+            
+            // 模拟生成复盘ID
+            console.log('步骤3: 生成复盘ID');
+            generateReviewIdForCard(cardWithReference);
+            
+            // 等待一小段时间，然后检查结果
+            setTimeout(() => {
+                console.log('步骤4: 检查最终结果');
+                
+                const finalElements = cardWithReference.querySelectorAll('.card-review-id');
+                let finalReferenceId = '';
+                let finalReviewId = '';
+                let referenceVisible = false;
+                let reviewIdVisible = false;
+                
+                finalElements.forEach(element => {
+                    const label = element.querySelector('.field-label');
+                    if (label) {
+                        if (label.textContent.includes('参考复盘ID')) {
+                            const value = element.querySelector('.review-id-value');
+                            if (value && value.textContent.trim()) {
+                                finalReferenceId = value.textContent.trim();
+                                referenceVisible = getComputedStyle(element).display !== 'none';
+                            }
+                        } else if (label.textContent.includes('复盘ID:') && !label.textContent.includes('参考')) {
+                            const value = element.querySelector('.field-value');
+                            if (value && value.textContent.trim()) {
+                                finalReviewId = value.textContent.trim();
+                                reviewIdVisible = getComputedStyle(element).display !== 'none';
+                            }
+                        }
+                    }
+                });
+                
+                console.log('\n📊 测试结果:');
+                console.log(`   初始参考复盘ID: ${initialReferenceId}`);
+                console.log(`   最终参考复盘ID: ${finalReferenceId} (${referenceVisible ? '可见' : '隐藏'})`);
+                console.log(`   生成的复盘ID: ${finalReviewId} (${reviewIdVisible ? '可见' : '隐藏'})`);
+                
+                // 判断测试结果
+                const referenceIdPreserved = initialReferenceId && finalReferenceId === initialReferenceId && referenceVisible;
+                const reviewIdGenerated = finalReviewId && reviewIdVisible;
+                
+                if (referenceIdPreserved && reviewIdGenerated) {
+                    console.log('\n✅ 测试通过：参考复盘ID保持显示，复盘ID成功生成');
+                    showNotification(`✅ 测试通过！参考复盘ID(${finalReferenceId}) 和 复盘ID(${finalReviewId}) 同时显示`, 'success');
+                } else if (referenceIdPreserved && !reviewIdGenerated) {
+                    console.log('\n⚠️ 部分通过：参考复盘ID保持显示，但复盘ID未生成');
+                    showNotification(`⚠️ 参考复盘ID保持，但复盘ID生成失败`, 'error');
+                } else if (!referenceIdPreserved && reviewIdGenerated) {
+                    console.log('\n❌ 测试失败：参考复盘ID丢失，但复盘ID生成成功');
+                    showNotification(`❌ 参考复盘ID丢失！仅有复盘ID(${finalReviewId})`, 'error');
+                } else {
+                    console.log('\n❌ 测试失败：参考复盘ID和复盘ID都有问题');
+                    showNotification('❌ 参考复盘ID和复盘ID都有问题', 'error');
+                }
+            }, 500);
+        };
+
+        // 测试参考复盘ID取消和重新关联功能
+        window.testReferenceToggle = function() {
+            console.log('🧪 测试参考复盘ID取消和重新关联功能');
+            showNotification('开始测试参考复盘ID取消和重新关联功能', 'info');
+            
+            // 模拟打开"应用至新需求参考"弹框
+            console.log('步骤1: 模拟通过"应用至新需求参考"打开弹框');
+            
+            // 打开抽屉
+            const drawer = document.getElementById('demandDrawer');
+            if (drawer) {
+                drawer.style.display = 'flex';
+                setTimeout(() => {
+                    drawer.classList.add('show');
+                }, 10);
+            }
+            
+            // 应用复盘数据
+            applyReviewData();
+            
+            setTimeout(() => {
+                console.log('步骤2: 检查初始状态');
+                const linkedState = document.getElementById('linkedState');
+                const cancelledState = document.getElementById('cancelledState');
+                const linkedReviewIdValue = document.getElementById('linkedReviewIdValue');
+                
+                console.log('- 正常关联状态显示:', linkedState ? getComputedStyle(linkedState).display : '元素不存在');
+                console.log('- 取消关联状态显示:', cancelledState ? getComputedStyle(cancelledState).display : '元素不存在');
+                console.log('- 参考复盘ID值:', linkedReviewIdValue ? linkedReviewIdValue.textContent : '无');
+                
+                // 测试取消参考功能
+                setTimeout(() => {
+                    console.log('\n步骤3: 测试取消参考功能');
+                    cancelReference();
+                    
+                    setTimeout(() => {
+                        console.log('- 取消后正常关联状态:', linkedState ? getComputedStyle(linkedState).display : '元素不存在');
+                        console.log('- 取消后取消关联状态:', cancelledState ? getComputedStyle(cancelledState).display : '元素不存在');
+                        
+                        // 测试重新关联功能
+                        setTimeout(() => {
+                            console.log('\n步骤4: 测试重新关联功能');
+                            restoreReference();
+                            
+                            setTimeout(() => {
+                                console.log('- 恢复后正常关联状态:', linkedState ? getComputedStyle(linkedState).display : '元素不存在');
+                                console.log('- 恢复后取消关联状态:', cancelledState ? getComputedStyle(cancelledState).display : '元素不存在');
+                                console.log('- 恢复后参考复盘ID值:', linkedReviewIdValue ? linkedReviewIdValue.textContent : '无');
+                                
+                                console.log('\n✅ 测试完成！参考复盘ID取消和重新关联功能正常工作');
+                                showNotification('✅ 参考复盘ID取消和重新关联功能测试完成！', 'success');
+                            }, 500);
+                        }, 2000);
+                    }, 500);
+                }, 2000);
+            }, 1000);
+        };
+
+        // 测试取消参考按钮不会关闭弹框的修复
+        window.testCancelReferenceNoClose = function() {
+            console.log('🧪 测试取消参考按钮不会关闭弹框的修复');
+            showNotification('开始测试取消参考按钮功能', 'info');
+            
+            // 1. 打开弹框
+            console.log('步骤1: 打开新增需求弹框');
+            const drawer = document.getElementById('demandDrawer');
+            if (drawer) {
+                drawer.style.display = 'flex';
+                setTimeout(() => {
+                    drawer.classList.add('show');
+                }, 10);
+            }
+            
+            // 2. 应用复盘数据
+            setTimeout(() => {
+                console.log('步骤2: 应用复盘数据，显示参考复盘ID');
+                applyReviewData();
+                
+                // 3. 测试取消参考功能
+                setTimeout(() => {
+                    console.log('步骤3: 点击取消参考按钮');
+                    
+                    // 检查弹框状态（点击前）
+                    const drawerBefore = document.getElementById('demandDrawer');
+                    const isVisibleBefore = drawerBefore && drawerBefore.classList.contains('show');
+                    console.log('- 点击前弹框是否显示:', isVisibleBefore);
+                    
+                    // 模拟点击取消参考按钮（包含事件对象）
+                    const mockEvent = {
+                        stopPropagation: () => console.log('  阻止事件冒泡'),
+                        preventDefault: () => console.log('  阻止默认行为')
+                    };
+                    cancelReference(mockEvent);
+                    
+                    // 检查弹框状态（点击后）
+                    setTimeout(() => {
+                        const drawerAfter = document.getElementById('demandDrawer');
+                        const isVisibleAfter = drawerAfter && drawerAfter.classList.contains('show');
+                        console.log('- 点击后弹框是否显示:', isVisibleAfter);
+                        
+                        // 4. 测试重新关联功能
+                        setTimeout(() => {
+                            console.log('步骤4: 点击重新关联按钮');
+                            
+                            // 检查弹框状态（重新关联前）
+                            const drawerBeforeRestore = document.getElementById('demandDrawer');
+                            const isVisibleBeforeRestore = drawerBeforeRestore && drawerBeforeRestore.classList.contains('show');
+                            console.log('- 重新关联前弹框是否显示:', isVisibleBeforeRestore);
+                            
+                            // 模拟点击重新关联按钮（包含事件对象）
+                            const mockEvent2 = {
+                                stopPropagation: () => console.log('  阻止事件冒泡'),
+                                preventDefault: () => console.log('  阻止默认行为')
+                            };
+                            restoreReference(mockEvent2);
+                            
+                            // 检查弹框状态（重新关联后）
+                            setTimeout(() => {
+                                const drawerAfterRestore = document.getElementById('demandDrawer');
+                                const isVisibleAfterRestore = drawerAfterRestore && drawerAfterRestore.classList.contains('show');
+                                console.log('- 重新关联后弹框是否显示:', isVisibleAfterRestore);
+                                
+                                // 验证结果
+                                const allVisible = isVisibleBefore && isVisibleAfter && isVisibleBeforeRestore && isVisibleAfterRestore;
+                                
+                                if (allVisible) {
+                                    console.log('\n✅ 测试通过：取消参考和重新关联按钮都不会关闭弹框');
+                                    showNotification('✅ 修复成功！按钮点击不会关闭弹框', 'success');
+                                } else {
+                                    console.log('\n❌ 测试失败：按钮点击仍会影响弹框显示');
+                                    showNotification('❌ 修复失败：按钮点击影响弹框显示', 'error');
+                                }
+                                
+                                console.log('\n📊 测试结果总结:');
+                                console.log(`- 初始状态: ${isVisibleBefore ? '✅ 显示' : '❌ 隐藏'}`);
+                                console.log(`- 取消参考后: ${isVisibleAfter ? '✅ 显示' : '❌ 隐藏'}`);
+                                console.log(`- 重新关联前: ${isVisibleBeforeRestore ? '✅ 显示' : '❌ 隐藏'}`);
+                                console.log(`- 重新关联后: ${isVisibleAfterRestore ? '✅ 显示' : '❌ 隐藏'}`);
+                                
+                                console.log('\n🔧 修复方案:');
+                                console.log('- ✅ 添加event参数到cancelReference和restoreReference函数');
+                                console.log('- ✅ 调用event.stopPropagation()阻止事件冒泡');
+                                console.log('- ✅ 调用event.preventDefault()阻止默认行为');
+                                console.log('- ✅ 确保用户在点击按钮后继续留在新增需求弹框内');
+                            }, 300);
+                        }, 2000);
+                    }, 300);
+                }, 2000);
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

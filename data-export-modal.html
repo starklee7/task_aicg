@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据导出 - AIGC服装设计</title>
+    <style>
+        /* 全局样式重置与基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #fafbfc;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        /* 配色方案变量 */
+        :root {
+            --primary-blue: #3b82f6;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --error-red: #ef4444;
+            --neutral-gray: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-body: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+        }
+
+        /* 弹框遮罩层 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 弹框主体 */
+        .modal {
+            width: 600px;
+            height: 500px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease;
+            overflow: hidden;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 弹框头部 */
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* 弹框主体内容 */
+        .modal-body {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+        }
+
+        /* 配置区域 */
+        .config-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .config-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-icon {
+            width: 16px;
+            height: 16px;
+            color: var(--primary-blue);
+        }
+
+        /* 时间范围选择器 */
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-body);
+            background: var(--bg-primary);
+            transition: border-color 0.2s;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .date-separator {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* 项目状态选择 */
+        .status-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-blue);
+        }
+
+        .checkbox-item.checked {
+            background: rgba(59, 130, 246, 0.05);
+            border-color: var(--primary-blue);
+        }
+
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .checkbox.checked {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .checkbox-label {
+            font-size: 13px;
+            color: var(--text-body);
+            user-select: none;
+        }
+
+        /* 数据类型选择 */
+        .data-type-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .radio-item:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-blue);
+        }
+
+        .radio-item.selected {
+            background: rgba(59, 130, 246, 0.05);
+            border-color: var(--primary-blue);
+        }
+
+        .radio {
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .radio.selected {
+            border-color: var(--primary-blue);
+        }
+
+        .radio.selected::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+        }
+
+        .radio-label {
+            font-size: 14px;
+            color: var(--text-body);
+            user-select: none;
+        }
+
+        .radio-description {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* 导出格式选择 */
+        .format-options {
+            display: flex;
+            gap: 12px;
+        }
+
+        .format-option {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .format-option:hover {
+            border-color: var(--primary-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .format-option.selected {
+            border-color: var(--primary-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .format-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-body);
+        }
+
+        .format-option.selected .format-icon {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .format-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-body);
+            margin-bottom: 2px;
+        }
+
+        .format-description {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* 预览区域 */
+        .preview-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .preview-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* 数据字段预览表格 */
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .preview-table td {
+            color: var(--text-body);
+        }
+
+        /* 底部操作区 */
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-size-info {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--neutral-gray);
+            border-color: var(--border-color);
+        }
+
+        .btn-cancel:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-export {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .btn-export:hover {
+            background: #2563eb;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 767px) {
+            .modal {
+                width: 95%;
+                height: 90vh;
+                margin: 0 16px;
+            }
+            
+            .modal-body {
+                padding: 16px;
+            }
+            
+            .date-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .status-checkboxes {
+                grid-template-columns: 1fr;
+            }
+            
+            .format-options {
+                flex-direction: column;
+            }
+            
+            .preview-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="modal">
+            <!-- 弹框头部 -->
+            <div class="modal-header">
+                <div class="modal-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    数据导出
+                </div>
+                <button class="close-btn" onclick="closeModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <!-- 导出配置区 -->
+                <div class="config-section">
+                    <!-- 时间范围选择 -->
+                    <div class="config-group">
+                        <div class="config-title">
+                            <svg class="config-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            时间范围
+                        </div>
+                        <div class="date-range">
+                            <input type="date" class="date-input" id="startDate" onchange="updatePreview()">
+                            <span class="date-separator">至</span>
+                            <input type="date" class="date-input" id="endDate" onchange="updatePreview()">
+                        </div>
+                    </div>
+
+                    <!-- 项目状态选择 -->
+                    <div class="config-group">
+                        <div class="config-title">
+                            <svg class="config-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                            </svg>
+                            项目状态
+                        </div>
+                        <div class="status-checkboxes">
+                            <div class="checkbox-item" onclick="toggleCheckbox(this, 'pending')">
+                                <div class="checkbox" id="status-pending"></div>
+                                <div class="checkbox-label">需求待确认</div>
+                            </div>
+                            <div class="checkbox-item" onclick="toggleCheckbox(this, 'designing')">
+                                <div class="checkbox" id="status-designing"></div>
+                                <div class="checkbox-label">设计中</div>
+                            </div>
+                            <div class="checkbox-item" onclick="toggleCheckbox(this, 'ready')">
+                                <div class="checkbox" id="status-ready"></div>
+                                <div class="checkbox-label">待交付</div>
+                            </div>
+                            <div class="checkbox-item" onclick="toggleCheckbox(this, 'testing')">
+                                <div class="checkbox" id="status-testing"></div>
+                                <div class="checkbox-label">预售测试</div>
+                            </div>
+                            <div class="checkbox-item" onclick="toggleCheckbox(this, 'completed')">
+                                <div class="checkbox" id="status-completed"></div>
+                                <div class="checkbox-label">已复盘</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据类型选择 -->
+                    <div class="config-group">
+                        <div class="config-title">
+                            <svg class="config-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            数据类型
+                        </div>
+                        <div class="data-type-options">
+                            <div class="radio-item selected" onclick="selectDataType(this, 'all')">
+                                <div class="radio selected" id="data-all"></div>
+                                <div>
+                                    <div class="radio-label">全部数据</div>
+                                    <div class="radio-description">包含需求数据、设计数据和复盘数据</div>
+                                </div>
+                            </div>
+                            <div class="radio-item" onclick="selectDataType(this, 'requirements')">
+                                <div class="radio" id="data-requirements"></div>
+                                <div>
+                                    <div class="radio-label">需求数据</div>
+                                    <div class="radio-description">项目需求、客户信息、设计要求等</div>
+                                </div>
+                            </div>
+                            <div class="radio-item" onclick="selectDataType(this, 'reviews')">
+                                <div class="radio" id="data-reviews"></div>
+                                <div>
+                                    <div class="radio-label">复盘数据</div>
+                                    <div class="radio-description">设计亮点、市场数据、问题改进等</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 导出格式选择 -->
+                    <div class="config-group">
+                        <div class="config-title">
+                            <svg class="config-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                            </svg>
+                            导出格式
+                        </div>
+                        <div class="format-options">
+                            <div class="format-option selected" onclick="selectFormat(this, 'csv')">
+                                <div class="format-icon">CSV</div>
+                                <div class="format-name">CSV 格式</div>
+                                <div class="format-description">通用表格格式，推荐</div>
+                            </div>
+                            <div class="format-option" onclick="selectFormat(this, 'excel')">
+                                <div class="format-icon">XLS</div>
+                                <div class="format-name">Excel 格式</div>
+                                <div class="format-description">Excel 表格文件</div>
+                            </div>
+                            <div class="format-option" onclick="selectFormat(this, 'pdf')">
+                                <div class="format-icon">PDF</div>
+                                <div class="format-name">PDF 报告</div>
+                                <div class="format-description">可打印报告格式</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据预览区 -->
+                <div class="preview-section">
+                    <div class="preview-title">导出预览</div>
+                    
+                    <div class="preview-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="recordCount">28</div>
+                            <div class="stat-label">数据条数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="fieldCount">15</div>
+                            <div class="stat-label">字段数量</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="fileSize">2.4MB</div>
+                            <div class="stat-label">预估大小</div>
+                        </div>
+                    </div>
+
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>字段名称</th>
+                                <th>数据类型</th>
+                                <th>示例数据</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody">
+                            <!-- 动态生成的表格行 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 导出进度 -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">准备导出...</div>
+                </div>
+            </div>
+
+            <!-- 底部操作区 -->
+            <div class="modal-footer">
+                <div class="file-size-info" id="fileSizeInfo">
+                    预计文件大小：2.4MB
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+                    <button class="btn btn-export" id="exportBtn" onclick="startExport()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7,10 12,15 17,10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        导出数据
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let exportConfig = {
+            startDate: '',
+            endDate: '',
+            statuses: [],
+            dataType: 'all',
+            format: 'csv'
+        };
+
+        let isExporting = false;
+
+        // 预设数据结构
+        const dataFields = {
+            all: [
+                { name: '项目ID', type: '文本', example: 'PROJ-2024-001' },
+                { name: '项目名称', type: '文本', example: '春季休闲T恤设计' },
+                { name: '客户名称', type: '文本', example: '潮流品牌有限公司' },
+                { name: '项目状态', type: '文本', example: '设计中' },
+                { name: '创建时间', type: '日期', example: '2024-03-15' },
+                { name: '目标人群', type: '文本', example: '青年女性' },
+                { name: '品类', type: '文本', example: '上装' },
+                { name: '价位带', type: '数字', example: '299' },
+                { name: '设计师', type: '文本', example: '李设计师' },
+                { name: '设计亮点', type: '长文本', example: '简约时尚，颜色搭配独特...' },
+                { name: '销量数据', type: '数字', example: '285' },
+                { name: '转化率', type: '百分比', example: '12.3%' },
+                { name: '用户评分', type: '数字', example: '4.7' },
+                { name: '问题描述', type: '长文本', example: '生产周期较预期延长...' },
+                { name: '改进建议', type: '长文本', example: '优化供应链管理...' }
+            ],
+            requirements: [
+                { name: '项目ID', type: '文本', example: 'PROJ-2024-001' },
+                { name: '项目名称', type: '文本', example: '春季休闲T恤设计' },
+                { name: '客户名称', type: '文本', example: '潮流品牌有限公司' },
+                { name: '目标人群', type: '文本', example: '青年女性' },
+                { name: '品类', type: '文本', example: '上装' },
+                { name: '价位带', type: '数字', example: '299' },
+                { name: '设计要求', type: '长文本', example: '简约时尚风格，适合春季穿着...' },
+                { name: '交付时间', type: '日期', example: '2024-03-22' },
+                { name: '创建时间', type: '日期', example: '2024-03-15' }
+            ],
+            reviews: [
+                { name: '项目ID', type: '文本', example: 'PROJ-2024-001' },
+                { name: '项目名称', type: '文本', example: '春季休闲T恤设计' },
+                { name: '设计亮点', type: '长文本', example: '色彩搭配独特，工艺精湛...' },
+                { name: '销量数据', type: '数字', example: '285' },
+                { name: '转化率', type: '百分比', example: '12.3%' },
+                { name: '用户评分', type: '数字', example: '4.7' },
+                { name: '用户反馈', type: '长文本', example: '整体满意度很高...' },
+                { name: '问题描述', type: '长文本', example: '生产周期较预期延长...' },
+                { name: '改进建议', type: '长文本', example: '优化供应链管理...' },
+                { name: '复盘时间', type: '日期', example: '2024-03-25' }
+            ]
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeModal();
+            setDefaultDates();
+            updatePreview();
+        });
+
+        function initializeModal() {
+            console.log('数据导出弹框初始化完成');
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(today.getMonth() - 1);
+            
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = oneMonthAgo.toISOString().split('T')[0];
+            
+            exportConfig.startDate = oneMonthAgo.toISOString().split('T')[0];
+            exportConfig.endDate = today.toISOString().split('T')[0];
+        }
+
+        // 复选框切换
+        function toggleCheckbox(item, status) {
+            const checkbox = item.querySelector('.checkbox');
+            const isChecked = checkbox.classList.contains('checked');
+            
+            if (isChecked) {
+                checkbox.classList.remove('checked');
+                item.classList.remove('checked');
+                exportConfig.statuses = exportConfig.statuses.filter(s => s !== status);
+            } else {
+                checkbox.classList.add('checked');
+                item.classList.add('checked');
+                exportConfig.statuses.push(status);
+            }
+            
+            updatePreview();
+        }
+
+        // 数据类型选择
+        function selectDataType(item, type) {
+            // 移除所有选中状态
+            document.querySelectorAll('.radio-item').forEach(el => {
+                el.classList.remove('selected');
+                el.querySelector('.radio').classList.remove('selected');
+            });
+            
+            // 添加选中状态
+            item.classList.add('selected');
+            item.querySelector('.radio').classList.add('selected');
+            
+            exportConfig.dataType = type;
+            updatePreview();
+        }
+
+        // 格式选择
+        function selectFormat(item, format) {
+            // 移除所有选中状态
+            document.querySelectorAll('.format-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // 添加选中状态
+            item.classList.add('selected');
+            
+            exportConfig.format = format;
+            updatePreview();
+        }
+
+        // 更新预览
+        function updatePreview() {
+            // 获取当前配置
+            exportConfig.startDate = document.getElementById('startDate').value;
+            exportConfig.endDate = document.getElementById('endDate').value;
+            
+            // 模拟计算数据条数
+            const baseRecords = 28;
+            const statusMultiplier = exportConfig.statuses.length > 0 ? exportConfig.statuses.length / 5 : 1;
+            const dateRange = calculateDateRangeDays();
+            const dateMultiplier = Math.max(0.1, Math.min(1, dateRange / 90)); // 90天为基准
+            
+            const recordCount = Math.round(baseRecords * statusMultiplier * dateMultiplier);
+            
+            // 获取字段信息
+            const fields = dataFields[exportConfig.dataType] || dataFields.all;
+            const fieldCount = fields.length;
+            
+            // 计算文件大小
+            const avgRecordSize = exportConfig.format === 'pdf' ? 2048 : 
+                                 exportConfig.format === 'excel' ? 512 : 256;
+            const fileSizeBytes = recordCount * fieldCount * avgRecordSize;
+            const fileSize = formatFileSize(fileSizeBytes);
+            
+            // 更新统计信息
+            document.getElementById('recordCount').textContent = recordCount;
+            document.getElementById('fieldCount').textContent = fieldCount;
+            document.getElementById('fileSize').textContent = fileSize;
+            document.getElementById('fileSizeInfo').textContent = `预计文件大小：${fileSize}`;
+            
+            // 更新预览表格
+            updatePreviewTable(fields);
+        }
+
+        function calculateDateRangeDays() {
+            if (!exportConfig.startDate || !exportConfig.endDate) return 30;
+            
+            const start = new Date(exportConfig.startDate);
+            const end = new Date(exportConfig.endDate);
+            const timeDiff = end.getTime() - start.getTime();
+            const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            return Math.max(1, dayDiff);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function updatePreviewTable(fields) {
+            const tbody = document.getElementById('previewTableBody');
+            tbody.innerHTML = '';
+            
+            // 只显示前10个字段
+            const displayFields = fields.slice(0, 10);
+            
+            displayFields.forEach(field => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${field.name}</td>
+                    <td>${field.type}</td>
+                    <td>${field.example}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // 如果字段数量超过10个，显示省略提示
+            if (fields.length > 10) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="3" style="text-align: center; color: var(--text-muted); font-style: italic;">
+                        还有 ${fields.length - 10} 个字段...
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
+        // 开始导出
+        function startExport() {
+            if (isExporting) return;
+            
+            // 验证配置
+            if (!exportConfig.startDate || !exportConfig.endDate) {
+                showNotification('请选择时间范围', 'error');
+                return;
+            }
+            
+            if (new Date(exportConfig.startDate) > new Date(exportConfig.endDate)) {
+                showNotification('开始时间不能晚于结束时间', 'error');
+                return;
+            }
+            
+            isExporting = true;
+            
+            // 更新UI状态
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = `
+                <div class="loading-spinner"></div>
+                导出中...
+            `;
+            
+            // 显示进度条
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.display = 'block';
+            
+            // 模拟导出过程
+            simulateExport();
+        }
+
+        function simulateExport() {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            let progress = 0;
+            const stages = [
+                { progress: 10, text: '正在查询数据...' },
+                { progress: 30, text: '正在处理数据...' },
+                { progress: 60, text: '正在生成文件...' },
+                { progress: 85, text: '正在压缩文件...' },
+                { progress: 100, text: '导出完成！' }
+            ];
+            
+            let currentStage = 0;
+            
+            const updateProgress = () => {
+                if (currentStage < stages.length) {
+                    const stage = stages[currentStage];
+                    progressFill.style.width = `${stage.progress}%`;
+                    progressText.textContent = stage.text;
+                    
+                    currentStage++;
+                    
+                    if (currentStage < stages.length) {
+                        setTimeout(updateProgress, 800 + Math.random() * 400);
+                    } else {
+                        // 导出完成
+                        setTimeout(() => {
+                            completeExport();
+                        }, 500);
+                    }
+                }
+            };
+            
+            updateProgress();
+        }
+
+        function completeExport() {
+            // 模拟文件下载
+            const filename = generateFilename();
+            const blob = new Blob(['模拟导出数据'], { type: getContentType() });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // 显示成功消息
+            showNotification('数据导出成功！', 'success');
+            
+            // 重置状态
+            resetExportState();
+            
+            // 2秒后关闭弹框
+            setTimeout(() => {
+                closeModal();
+            }, 2000);
+        }
+
+        function generateFilename() {
+            const now = new Date();
+            const timestamp = now.toISOString().slice(0, 10).replace(/-/g, '');
+            const typeMap = {
+                'all': '全部数据',
+                'requirements': '需求数据',
+                'reviews': '复盘数据'
+            };
+            const extension = exportConfig.format === 'excel' ? 'xlsx' : exportConfig.format;
+            
+            return `AIGC设计项目_${typeMap[exportConfig.dataType]}_${timestamp}.${extension}`;
+        }
+
+        function getContentType() {
+            const typeMap = {
+                'csv': 'text/csv',
+                'excel': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'pdf': 'application/pdf'
+            };
+            
+            return typeMap[exportConfig.format] || 'text/csv';
+        }
+
+        function resetExportState() {
+            isExporting = false;
+            
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.disabled = false;
+            exportBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                导出数据
+            `;
+            
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.display = 'none';
+            
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = '0%';
+        }
+
+        // 关闭弹框
+        function closeModal() {
+            const modal = document.querySelector('.modal-overlay');
+            modal.style.animation = 'fadeOut 0.3s ease';
+            
+            setTimeout(() => {
+                if (window.parent && window.parent.closeExportModal) {
+                    window.parent.closeExportModal();
+                } else {
+                    window.close();
+                }
+            }, 300);
+        }
+
+        // 通知系统
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 6px;
+                color: white;
+                font-size: 14px;
+                z-index: 3000;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            `;
+            
+            const colors = {
+                'success': '#10b981',
+                'error': '#ef4444',
+                'warning': '#f59e0b',
+                'info': '#3b82f6'
+            };
+            
+            notification.style.backgroundColor = colors[type] || colors.info;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // ESC 关闭弹框
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            
+            // Enter 导出
+            if (e.key === 'Enter' && !isExporting) {
+                startExport();
+            }
+        });
+
+        // CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求⇄复盘协同板 - AICG服装设计系统</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <style>
+        /* 页面整体布局 */
+        .page-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: var(--spacing-2xl);
+            background: var(--bg-secondary);
+            min-height: 100vh;
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-3xl);
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-3xl);
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        /* 复盘卡片模块 */
+        .review-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: var(--spacing-2xl);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .apply-btn {
+            padding: 8px 16px;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .apply-btn:hover {
+            background: var(--primary-blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .apply-btn:disabled {
+            background: var(--neutral-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .review-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        .review-column {
+            background: var(--bg-primary);
+            padding: var(--spacing-2xl);
+            min-height: 200px;
+        }
+
+        .review-column-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .review-column.highlights .review-column-title {
+            border-bottom-color: var(--success-green);
+        }
+
+        .review-column.metrics .review-column-title {
+            border-bottom-color: var(--primary-blue);
+        }
+
+        .review-column.improvements .review-column-title {
+            border-bottom-color: var(--warning-orange);
+        }
+
+        .review-text {
+            color: var(--text-body);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .review-text.collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .expand-btn {
+            margin-top: var(--spacing-sm);
+            color: var(--primary-blue);
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* 需求表单模块 */
+        .demand-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-content {
+            padding: var(--spacing-2xl);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: var(--error-red);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px var(--primary-blue-light);
+        }
+
+        .form-control.error {
+            border-color: var(--error-red);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            font-size: 12px;
+            margin-top: var(--spacing-xs);
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 单选按钮组 */
+        .radio-group {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-blue);
+        }
+
+        .radio-item label {
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-body);
+        }
+
+        /* 价位带输入 */
+        .price-range {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .price-range input {
+            flex: 1;
+        }
+
+        .price-separator {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* 标签输入 */
+        .tag-input-container {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
+            min-height: 42px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+            align-items: center;
+            cursor: text;
+        }
+
+        .tag-input-container:focus-within {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px var(--primary-blue-light);
+        }
+
+        .tag-item {
+            display: flex;
+            align-items: center;
+            background: var(--tag-blue-bg);
+            color: var(--tag-blue-text);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            gap: var(--spacing-xs);
+        }
+
+        .tag-item.review-tag {
+            background: var(--tag-green-bg);
+            color: var(--tag-green-text);
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+            font-size: 14px;
+            padding: 4px;
+        }
+
+        /* 关联复盘标签 */
+        .linked-tags {
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-sm);
+            border-top: 1px solid var(--border-color-light);
+        }
+
+        .linked-tags-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .linked-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+        }
+
+        /* 提交按钮 */
+        .submit-section {
+            padding: var(--spacing-2xl);
+            border-top: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        /* 协同看板模块 */
+        .kanban-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        .kanban-column {
+            background: var(--bg-primary);
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kanban-column-header {
+            padding: var(--spacing-lg);
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .kanban-column-content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .kanban-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+
+        .kanban-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .kanban-card.dragging {
+            opacity: 0.8;
+            transform: rotate(2deg);
+            cursor: grabbing;
+        }
+
+        .kanban-card-header {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .demand-id {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .kanban-card-body {
+            padding: var(--spacing-md);
+        }
+
+        .demand-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .demand-info {
+            font-size: 12px;
+            color: var(--text-body);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .last-updated {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: var(--spacing-sm);
+            text-align: right;
+        }
+
+        .thumbnail {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--primary-blue), #60a5fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* 拖拽状态 */
+        .kanban-column.drag-over {
+            background: var(--primary-blue-light);
+        }
+
+        /* 占位符 */
+        .empty-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: var(--spacing-2xl);
+            font-style: italic;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-2xl);
+            }
+
+            .review-content {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .kanban-board {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                padding: var(--spacing-lg);
+            }
+
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .price-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .kanban-card {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* 通知样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success-green);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 3000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--error-red);
+        }
+
+        .toast.warning {
+            background: var(--warning-orange);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <h1 class="page-title">需求⇄复盘协同板</h1>
+            <p class="page-subtitle">上轮交付复盘要点回顾 → 新轮需求表单填报 → 进度&反馈追踪</p>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 复盘卡片模块 -->
+            <div class="review-section">
+                <div class="section-header">
+                    <h2 class="section-title">上轮交付复盘</h2>
+                    <button class="apply-btn" id="applyReviewBtn">一键应用</button>
+                </div>
+                <div class="review-content">
+                    <div class="review-column highlights">
+                        <h3 class="review-column-title">设计亮点</h3>
+                        <div class="review-text collapsed" id="highlightsText">
+                            本次设计在色彩搭配上采用了当下最流行的莫兰迪色系，整体风格简约而不失精致。版型设计充分考虑了亚洲女性的身材特点，腰线设计恰到好处，既修饰了身形又保持了舒适度。面料选择上采用了高品质的棉麻混纺材质，透气性好，适合春夏季节穿着。细节处理上，我们在领口和袖口增加了精致的包边工艺，提升了整体的品质感。此外，考虑到现代女性的穿搭需求，设计中融入了多种搭配可能性，既可以商务正装，也能够休闲出街，实用性和时尚性并重。
+                        </div>
+                        <button class="expand-btn" onclick="toggleExpand('highlightsText', this)">展开</button>
+                    </div>
+                    <div class="review-column metrics">
+                        <h3 class="review-column-title">市场数据</h3>
+                        <div class="review-text collapsed" id="metricsText">
+                            根据上线后的市场反馈数据显示，该产品在目标人群中的接受度达到了85%，远超预期的70%。销售数据方面，首发两周内售出1200件，转化率达到了12.5%。用户评价整体积极，4.8分的高评分体现了产品的市场认可度。从年龄分布来看，25-35岁女性占比最高，达到60%，与我们的目标人群高度吻合。地域分布上，一线城市占比45%，二线城市占比35%，显示出良好的市场渗透力。复购率达到了30%，说明产品的用户粘性较强。通过社交媒体的传播，获得了大量的用户生成内容，进一步扩大了品牌影响力。
+                        </div>
+                        <button class="expand-btn" onclick="toggleExpand('metricsText', this)">展开</button>
+                    </div>
+                    <div class="review-column improvements">
+                        <h3 class="review-column-title">问题改进</h3>
+                        <div class="review-text collapsed" id="improvementsText">
+                            虽然整体表现良好，但仍有一些需要改进的地方。首先，部分用户反馈尺码偏小，建议在下一版本中调整尺码标准，特别是胸围和腰围的设计。其次，颜色选择相对有限，建议增加更多色彩选项以满足不同用户的需求。包装方面，有用户提到包装过于简单，建议提升包装的质感和设计感。物流配送上，部分地区的配送时间较长，需要优化供应链管理。客服响应速度也有待提升，建议增加客服人员配置。此外，产品说明和洗护指南需要更加详细，帮助用户更好地保养产品。最后，建议在下一季产品中增加更多的搭配建议和穿着场景展示。
+                        </div>
+                        <button class="expand-btn" onclick="toggleExpand('improvementsText', this)">展开</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 需求表单模块 -->
+            <div class="demand-section">
+                <div class="section-header">
+                    <h2 class="section-title">新需求填报</h2>
+                </div>
+                <form class="form-content" id="demandForm">
+                    <div class="form-group">
+                        <label class="form-label required">目标人群</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="age_20_30" name="target_audience" value="20-30岁女性" required>
+                                <label for="age_20_30">20-30岁女性</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="age_30_40" name="target_audience" value="30-40岁女性">
+                                <label for="age_30_40">30-40岁女性</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="age_40_50" name="target_audience" value="40-50岁女性">
+                                <label for="age_40_50">40-50岁女性</label>
+                            </div>
+                        </div>
+                        <div class="error-message" id="target_audience_error">请选择目标人群</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="category">品类</label>
+                        <input type="text" id="category" name="category" class="form-control" placeholder="请输入品类（如：连衣裙、牛仔裤等）" maxlength="20" required>
+                        <div class="error-message" id="category_error">品类不能为空，且不超过20个字符</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">价位带</label>
+                        <div class="price-range">
+                            <input type="number" id="price_min" name="price_min" class="form-control" placeholder="最低价" min="0">
+                            <span class="price-separator">～</span>
+                            <input type="number" id="price_max" name="price_max" class="form-control" placeholder="最高价" min="0">
+                        </div>
+                        <div class="error-message" id="price_error">价格区间有误，最高价应大于最低价</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">灵感词</label>
+                        <div class="tag-input-container" id="tagContainer">
+                            <input type="text" class="tag-input" id="tagInput" placeholder="输入灵感词后按回车添加">
+                        </div>
+                        <div class="linked-tags" id="linkedTags" style="display: none;">
+                            <div class="linked-tags-title">已关联的复盘标签：</div>
+                            <div class="linked-tags-container" id="linkedTagsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="submit-section">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">提交需求</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 协同看板模块 -->
+        <div class="kanban-section">
+            <div class="section-header">
+                <h2 class="section-title">需求协同看板</h2>
+                <div class="flex gap-md">
+                    <select id="roleFilter" class="form-control" style="width: auto;">
+                        <option value="">所有角色</option>
+                        <option value="客户">客户视角</option>
+                        <option value="设计师">设计师视角</option>
+                        <option value="运营">运营视角</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
+                </div>
+            </div>
+            <div class="kanban-board" id="kanbanBoard">
+                <div class="kanban-column" data-status="pending">
+                    <div class="kanban-column-header">需求待确认 (2)</div>
+                    <div class="kanban-column-content" id="pending-column">
+                        <!-- 卡片将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="designing">
+                    <div class="kanban-column-header">设计中 (1)</div>
+                    <div class="kanban-column-content" id="designing-column">
+                        <!-- 卡片将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="testing">
+                    <div class="kanban-column-header">预售测试 (3)</div>
+                    <div class="kanban-column-content" id="testing-column">
+                        <!-- 卡片将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="delivering">
+                    <div class="kanban-column-header">待交付 (1)</div>
+                    <div class="kanban-column-content" id="delivering-column">
+                        <!-- 卡片将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div class="kanban-column" data-status="reviewed">
+                    <div class="kanban-column-header">已复盘 (5)</div>
+                    <div class="kanban-column-content" id="reviewed-column">
+                        <!-- 卡片将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局数据
+        let demandData = [
+            {
+                id: 'DEM001',
+                title: '春季女装连衣裙设计',
+                status: 'pending',
+                targetAudience: '25-35岁女性',
+                category: '连衣裙',
+                priceRange: '199-399',
+                tags: ['简约', '优雅', '商务'],
+                linkedReviewTags: [],
+                thumbnail: '👗',
+                lastUpdated: '2024-01-15 14:30'
+            },
+            {
+                id: 'DEM002',
+                title: '夏季休闲上衣设计',
+                status: 'designing',
+                targetAudience: '20-30岁女性',
+                category: '上衣',
+                priceRange: '99-199',
+                tags: ['休闲', '舒适', '透气'],
+                linkedReviewTags: [],
+                thumbnail: '👕',
+                lastUpdated: '2024-01-14 16:45'
+            },
+            {
+                id: 'DEM003',
+                title: '秋季外套设计',
+                status: 'testing',
+                targetAudience: '30-40岁女性',
+                category: '外套',
+                priceRange: '299-599',
+                tags: ['保暖', '时尚', '百搭'],
+                linkedReviewTags: [],
+                thumbnail: '🧥',
+                lastUpdated: '2024-01-13 09:20'
+            },
+            {
+                id: 'DEM004',
+                title: '职场西装套装',
+                status: 'delivering',
+                targetAudience: '25-35岁女性',
+                category: '套装',
+                priceRange: '599-999',
+                tags: ['正式', '专业', '修身'],
+                linkedReviewTags: [],
+                thumbnail: '🤵‍♀️',
+                lastUpdated: '2024-01-12 11:15'
+            },
+            {
+                id: 'DEM005',
+                title: '夏季牛仔裤设计',
+                status: 'reviewed',
+                targetAudience: '20-30岁女性',
+                category: '牛仔裤',
+                priceRange: '149-299',
+                tags: ['经典', '耐穿', '百搭'],
+                linkedReviewTags: ['色彩搭配', '版型设计'],
+                thumbnail: '👖',
+                lastUpdated: '2024-01-10 15:30'
+            }
+        ];
+
+        let currentTags = [];
+        let linkedReviewTags = [];
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            initTagInput();
+            initFormValidation();
+            initKanban();
+            initDragAndDrop();
+        });
+
+        // 复盘文本展开/折叠功能
+        function toggleExpand(textId, button) {
+            const textElement = document.getElementById(textId);
+            const isCollapsed = textElement.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                textElement.classList.remove('collapsed');
+                button.textContent = '折叠';
+            } else {
+                textElement.classList.add('collapsed');
+                button.textContent = '展开';
+            }
+        }
+
+        // 一键应用复盘要点
+        document.getElementById('applyReviewBtn').addEventListener('click', function() {
+            const reviewTags = ['色彩搭配优化', '版型调整', '面料升级', '细节改进', '用户体验'];
+            linkedReviewTags = [...reviewTags];
+            
+            // 显示关联标签区域
+            const linkedTagsElement = document.getElementById('linkedTags');
+            const linkedTagsContainer = document.getElementById('linkedTagsContainer');
+            
+            linkedTagsElement.style.display = 'block';
+            linkedTagsContainer.innerHTML = '';
+            
+            linkedReviewTags.forEach(tag => {
+                const tagElement = createTagElement(tag, true, true);
+                linkedTagsContainer.appendChild(tagElement);
+            });
+            
+            showToast('复盘要点已应用到新需求', 'success');
+            this.disabled = true;
+            this.textContent = '已应用';
+        });
+
+        // 标签输入功能
+        function initTagInput() {
+            const tagInput = document.getElementById('tagInput');
+            const tagContainer = document.getElementById('tagContainer');
+            
+            tagInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tagText = this.value.trim();
+                    if (tagText && !currentTags.includes(tagText)) {
+                        currentTags.push(tagText);
+                        const tagElement = createTagElement(tagText, false, true);
+                        tagContainer.insertBefore(tagElement, tagInput);
+                        this.value = '';
+                    }
+                }
+            });
+        }
+
+        // 创建标签元素
+        function createTagElement(tagText, isReviewTag = false, removable = true) {
+            const tagElement = document.createElement('div');
+            tagElement.className = isReviewTag ? 'tag-item review-tag' : 'tag-item';
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = tagText;
+            tagElement.appendChild(textSpan);
+            
+            if (removable) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'tag-remove';
+                removeBtn.innerHTML = '×';
+                removeBtn.onclick = function() {
+                    if (isReviewTag) {
+                        linkedReviewTags = linkedReviewTags.filter(tag => tag !== tagText);
+                        if (linkedReviewTags.length === 0) {
+                            document.getElementById('linkedTags').style.display = 'none';
+                        }
+                    } else {
+                        currentTags = currentTags.filter(tag => tag !== tagText);
+                    }
+                    tagElement.remove();
+                };
+                tagElement.appendChild(removeBtn);
+            }
+            
+            return tagElement;
+        }
+
+        // 表单验证
+        function initFormValidation() {
+            const form = document.getElementById('demandForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('input', validateField);
+            });
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (validateForm()) {
+                    submitDemand();
+                }
+            });
+        }
+
+        function validateField(e) {
+            const field = e.target;
+            const fieldName = field.name || field.id;
+            let isValid = true;
+            let errorMessage = '';
+            
+            switch (fieldName) {
+                case 'target_audience':
+                    const selectedRadio = document.querySelector('input[name="target_audience"]:checked');
+                    isValid = selectedRadio !== null;
+                    errorMessage = '请选择目标人群';
+                    break;
+                case 'category':
+                    isValid = field.value.trim().length > 0 && field.value.length <= 20;
+                    errorMessage = '品类不能为空，且不超过20个字符';
+                    break;
+                case 'price_min':
+                case 'price_max':
+                    const minPrice = parseFloat(document.getElementById('price_min').value) || 0;
+                    const maxPrice = parseFloat(document.getElementById('price_max').value) || 0;
+                    if (minPrice > 0 && maxPrice > 0) {
+                        isValid = maxPrice >= minPrice;
+                        errorMessage = '价格区间有误，最高价应大于等于最低价';
+                    }
+                    break;
+            }
+            
+            const errorElement = document.getElementById(fieldName + '_error');
+            if (errorElement) {
+                if (isValid) {
+                    field.classList.remove('error');
+                    errorElement.classList.remove('show');
+                } else {
+                    field.classList.add('error');
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.add('show');
+                }
+            }
+            
+            return isValid;
+        }
+
+        function validateForm() {
+            const form = document.getElementById('demandForm');
+            const inputs = form.querySelectorAll('input[required]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!validateField({ target: input })) {
+                    isValid = false;
+                }
+            });
+            
+            return isValid;
+        }
+
+        // 提交需求
+        function submitDemand() {
+            const formData = new FormData(document.getElementById('demandForm'));
+            const minPrice = document.getElementById('price_min').value;
+            const maxPrice = document.getElementById('price_max').value;
+            
+            const newDemand = {
+                id: 'DEM' + String(demandData.length + 1).padStart(3, '0'),
+                title: formData.get('category') + '设计需求',
+                status: 'pending',
+                targetAudience: formData.get('target_audience'),
+                category: formData.get('category'),
+                priceRange: minPrice && maxPrice ? `${minPrice}-${maxPrice}` : '',
+                tags: [...currentTags],
+                linkedReviewTags: [...linkedReviewTags],
+                thumbnail: '🎨',
+                lastUpdated: new Date().toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            };
+            
+            demandData.push(newDemand);
+            
+            // 重置表单
+            document.getElementById('demandForm').reset();
+            currentTags = [];
+            linkedReviewTags = [];
+            document.getElementById('tagContainer').innerHTML = '<input type="text" class="tag-input" id="tagInput" placeholder="输入灵感词后按回车添加">';
+            document.getElementById('linkedTags').style.display = 'none';
+            document.getElementById('applyReviewBtn').disabled = false;
+            document.getElementById('applyReviewBtn').textContent = '一键应用';
+            
+            // 重新初始化标签输入
+            initTagInput();
+            
+            // 更新看板
+            renderKanban();
+            
+            showToast('需求提交成功！', 'success');
+        }
+
+        // 看板功能
+        function initKanban() {
+            renderKanban();
+        }
+
+        function renderKanban() {
+            const columns = {
+                'pending': document.getElementById('pending-column'),
+                'designing': document.getElementById('designing-column'),
+                'testing': document.getElementById('testing-column'),
+                'delivering': document.getElementById('delivering-column'),
+                'reviewed': document.getElementById('reviewed-column')
+            };
+            
+            // 清空所有列
+            Object.values(columns).forEach(column => {
+                column.innerHTML = '';
+            });
+            
+            // 更新列标题中的数量
+            const statusCounts = {};
+            demandData.forEach(demand => {
+                statusCounts[demand.status] = (statusCounts[demand.status] || 0) + 1;
+            });
+            
+            Object.keys(statusCounts).forEach(status => {
+                const header = document.querySelector(`[data-status="${status}"] .kanban-column-header`);
+                if (header) {
+                    const statusNames = {
+                        'pending': '需求待确认',
+                        'designing': '设计中',
+                        'testing': '预售测试',
+                        'delivering': '待交付',
+                        'reviewed': '已复盘'
+                    };
+                    header.textContent = `${statusNames[status]} (${statusCounts[status]})`;
+                }
+            });
+            
+            // 渲染卡片
+            demandData.forEach(demand => {
+                const column = columns[demand.status];
+                if (column) {
+                    const card = createKanbanCard(demand);
+                    column.appendChild(card);
+                }
+            });
+            
+            // 添加空状态占位符
+            Object.entries(columns).forEach(([status, column]) => {
+                if (column.children.length === 0) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'empty-placeholder';
+                    placeholder.textContent = '暂无需求';
+                    column.appendChild(placeholder);
+                }
+            });
+        }
+
+        function createKanbanCard(demand) {
+            const card = document.createElement('div');
+            card.className = 'kanban-card';
+            card.draggable = true;
+            card.dataset.demandId = demand.id;
+            card.dataset.status = demand.status;
+            
+            const statusNames = {
+                'pending': '待确认',
+                'designing': '设计中',
+                'testing': '预售测试',
+                'delivering': '待交付',
+                'reviewed': '已复盘'
+            };
+            
+            const statusColors = {
+                'pending': 'tag-red',
+                'designing': 'tag-orange',
+                'testing': 'tag-blue',
+                'delivering': 'tag-blue',
+                'reviewed': 'tag-green'
+            };
+            
+            card.innerHTML = `
+                <div class="kanban-card-header">
+                    <span class="demand-id">${demand.id}</span>
+                    <span class="tag ${statusColors[demand.status]}">${statusNames[demand.status]}</span>
+                </div>
+                <div class="kanban-card-body">
+                    <div class="thumbnail">${demand.thumbnail}</div>
+                    <div class="demand-title">${demand.title}</div>
+                    <div class="demand-info">目标：${demand.targetAudience}</div>
+                    <div class="demand-info">品类：${demand.category}</div>
+                    ${demand.priceRange ? `<div class="demand-info">价位：¥${demand.priceRange}</div>` : ''}
+                    ${demand.tags.length > 0 ? `<div class="demand-info">标签：${demand.tags.join(', ')}</div>` : ''}
+                    <div class="last-updated">最后更新：${demand.lastUpdated}</div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // 拖拽功能
+        let draggedCard = null;
+
+        function initDragAndDrop() {
+            document.addEventListener('dragstart', handleDragStart);
+            document.addEventListener('dragend', handleDragEnd);
+            document.addEventListener('dragover', handleDragOver);
+            document.addEventListener('drop', handleDrop);
+            document.addEventListener('dragenter', handleDragEnter);
+            document.addEventListener('dragleave', handleDragLeave);
+        }
+
+        function handleDragStart(e) {
+            if (e.target.classList.contains('kanban-card')) {
+                draggedCard = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        }
+
+        function handleDragEnd(e) {
+            if (e.target.classList.contains('kanban-card')) {
+                e.target.classList.remove('dragging');
+                draggedCard = null;
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            if (e.target.classList.contains('kanban-column-content')) {
+                e.target.closest('.kanban-column').classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (e.target.classList.contains('kanban-column-content')) {
+                e.target.closest('.kanban-column').classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const column = e.target.closest('.kanban-column');
+            if (column) {
+                column.classList.remove('drag-over');
+            }
+            
+            if (draggedCard && column) {
+                const newStatus = column.dataset.status;
+                const demandId = draggedCard.dataset.demandId;
+                
+                // 更新数据
+                const demand = demandData.find(d => d.id === demandId);
+                if (demand && demand.status !== newStatus) {
+                    demand.status = newStatus;
+                    demand.lastUpdated = new Date().toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    // 重新渲染看板
+                    renderKanban();
+                    
+                    const statusNames = {
+                        'pending': '需求待确认',
+                        'designing': '设计中',
+                        'testing': '预售测试',
+                        'delivering': '待交付',
+                        'reviewed': '已复盘'
+                    };
+                    
+                    showToast(`需求 ${demandId} 已移动到 ${statusNames[newStatus]}`, 'success');
+                    
+                    // 模拟WebSocket通知
+                    console.log(`WebSocket通知: {userId: "current_user", orderId: "${demandId}", newStatus: "${newStatus}"}`);
+                }
+            }
+        }
+
+        // 数据导出功能
+        function exportData() {
+            const csvContent = [
+                ['需求ID', '标题', '状态', '目标人群', '品类', '价位带', '标签', '最后更新'],
+                ...demandData.map(demand => [
+                    demand.id,
+                    demand.title,
+                    demand.status,
+                    demand.targetAudience,
+                    demand.category,
+                    demand.priceRange,
+                    demand.tags.join(';'),
+                    demand.lastUpdated
+                ])
+            ];
+            
+            const csv = csvContent.map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `需求数据_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('数据导出成功！', 'success');
+        }
+
+        // 通知功能
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // 角色过滤功能
+        document.getElementById('roleFilter').addEventListener('change', function() {
+            const selectedRole = this.value;
+            // 这里可以根据角色权限过滤显示的数据
+            console.log('角色过滤:', selectedRole);
+            showToast(`已切换到${selectedRole || '全部'}视角`, 'info');
+        });
+    </script>
+</body>
+</html>

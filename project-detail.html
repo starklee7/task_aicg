@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目详情 - AIGC服装设计</title>
+    <style>
+        /* 全局样式重置与基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #f8fafc;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        /* 配色方案变量 */
+        :root {
+            --primary-blue: #3b82f6;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --error-red: #ef4444;
+            --neutral-gray: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-body: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            height: 60px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-blue);
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* 主内容区域 */
+        .main-container {
+            margin-top: 60px;
+            padding: 24px;
+            min-height: calc(100vh - 60px);
+            display: flex;
+            gap: 24px;
+        }
+
+        /* 左侧主要内容区域 */
+        .content-area {
+            flex: 1;
+            max-width: 70%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 右侧操作面板 */
+        .sidebar {
+            width: 30%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-body {
+            padding: 20px 24px;
+        }
+
+        /* 项目基本信息卡片 */
+        .project-info-card .card-header {
+            padding-bottom: 20px;
+        }
+
+        .project-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .project-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .status-badge.pending { background: var(--neutral-gray); }
+        .status-badge.designing { background: var(--warning-orange); }
+        .status-badge.ready { background: var(--primary-blue); }
+        .status-badge.testing { background: #8b5cf6; }
+        .status-badge.completed { background: var(--success-green); }
+
+        .created-time {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--text-body);
+            font-weight: 500;
+        }
+
+        /* 需求详情卡片 */
+        .requirement-content {
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-body);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag.target-audience { background: #fef3c7; color: #92400e; }
+        .tag.keyword { background: #e0e7ff; color: #3730a3; }
+
+        /* 设计稿展示区 */
+        .design-showcase {
+            margin-bottom: 16px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 400px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            border: 2px dashed var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .placeholder-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+        }
+
+        .image-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .main-image:hover .image-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .thumbnail-gallery {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .thumbnail {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .thumbnail.active {
+            border-color: var(--primary-blue);
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* 进度时间轴 */
+        .timeline {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-color);
+            border: 2px solid var(--bg-primary);
+        }
+
+        .timeline-item.active::before {
+            background: var(--primary-blue);
+        }
+
+        .timeline-item.completed::before {
+            background: var(--success-green);
+        }
+
+        .timeline-content {
+            padding-left: 8px;
+        }
+
+        .timeline-status {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-body);
+            margin-bottom: 2px;
+        }
+
+        .timeline-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* 快速操作按钮 */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-body);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-blue);
+        }
+
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+            border-color: var(--success-green);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 协作信息 */
+        .collaborator-info {
+            text-align: center;
+        }
+
+        .collaborator-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success-green), #34d399);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 auto 12px;
+        }
+
+        .collaborator-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .collaborator-role {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .last-update {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* 文件列表 */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .file-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-blue);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+
+        .file-name {
+            font-size: 13px;
+            color: var(--text-body);
+            flex: 1;
+        }
+
+        .file-download {
+            color: var(--primary-blue);
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .file-download:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .content-area {
+                max-width: 100%;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-width: none;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 16px;
+            }
+            
+            .project-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-image {
+                height: 250px;
+            }
+        }
+
+        /* 图片预览遮罩 */
+        .image-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            cursor: pointer;
+        }
+
+        .image-overlay.show {
+            display: flex;
+        }
+
+        .overlay-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .overlay-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="nav-left">
+            <button class="back-btn" onclick="goBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <h1 class="page-title">项目详情</h1>
+        </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="main-container">
+        <!-- 左侧主要内容区域 -->
+        <div class="content-area">
+            <!-- 项目基本信息卡片 -->
+            <div class="card project-info-card">
+                <div class="card-header">
+                    <h1 class="project-name">春季休闲T恤设计</h1>
+                    <div class="project-meta">
+                        <div class="status-badge designing">设计中</div>
+                        <div class="created-time">创建时间：2024年3月15日 14:30</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">客户信息</div>
+                            <div class="info-value">潮流品牌有限公司</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">项目编号</div>
+                            <div class="info-value">PROJ-2024-001</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">品类</div>
+                            <div class="info-value">上装 - T恤</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">价位带</div>
+                            <div class="info-value">¥299</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">交付时间</div>
+                            <div class="info-value">2024年3月22日</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">优先级</div>
+                            <div class="info-value">高</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 需求详情卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        需求详情
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="tags-container">
+                        <div class="tag target-audience">青年女性</div>
+                        <div class="tag target-audience">都市白领</div>
+                    </div>
+                    
+                    <div class="tags-container">
+                        <div class="tag keyword">简约</div>
+                        <div class="tag keyword">舒适</div>
+                        <div class="tag keyword">百搭</div>
+                        <div class="tag keyword">春季</div>
+                        <div class="tag keyword">休闲</div>
+                    </div>
+                    
+                    <div class="requirement-content">
+                        <strong>设计要求：</strong><br>
+                        设计一款适合春季穿着的休闲T恤，主要面向25-35岁的都市女性。设计风格要求简约时尚，颜色以浅色系为主，如白色、米色、浅粉色等。面料需要选择舒适透气的棉质材料，版型要求修身但不紧身，能够很好地展现女性身材的同时保证穿着舒适度。
+                        <br><br>
+                        在细节设计上，希望能够加入一些时尚元素，比如特殊的领口设计或者袖口装饰，但不要过于复杂。整体设计要体现出都市女性的优雅与活力，既适合日常通勤，也适合周末休闲场合。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设计稿展示区 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21,15 16,10 5,21"></polyline>
+                        </svg>
+                        设计稿展示
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="design-showcase">
+                        <div class="main-image" id="mainImage">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                        <polyline points="14,2 14,8 20,8"></polyline>
+                                    </svg>
+                                </div>
+                                <div>设计稿制作中...</div>
+                                <div style="font-size: 12px; margin-top: 4px;">设计师正在创作中，请耐心等待</div>
+                            </div>
+                            <div class="image-actions">
+                                <button class="action-btn" onclick="previewImage()" title="预览">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                                <button class="action-btn" onclick="downloadImage()" title="下载">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7,10 12,15 17,10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="thumbnail-gallery">
+                            <div class="thumbnail active">
+                                <div style="width: 100%; height: 100%; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #6b7280;">
+                                    设计中
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧操作面板 -->
+        <div class="sidebar">
+            <!-- 进度时间轴 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12,6 12,12 16,14"></polyline>
+                        </svg>
+                        项目进度
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-content">
+                                <div class="timeline-status">需求已确认</div>
+                                <div class="timeline-time">2024-03-15 14:30</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item active">
+                            <div class="timeline-content">
+                                <div class="timeline-status">设计中</div>
+                                <div class="timeline-time">2024-03-16 09:00</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-status">待交付</div>
+                                <div class="timeline-time">待定</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-status">预售测试</div>
+                                <div class="timeline-time">待定</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-status">已复盘</div>
+                                <div class="timeline-time">待定</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9,11 12,14 22,4"></polyline>
+                            <path d="M21,12v7a2 2 0 0 1-2,2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        快速操作
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="statusBtn" onclick="changeStatus()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            标记为待交付
+                        </button>
+                        
+                        <button class="btn btn-secondary" onclick="uploadDesign()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
+                                <polyline points="7,10 12,5 17,10"></polyline>
+                                <line x1="12" y1="5" x2="12" y2="15"></line>
+                            </svg>
+                            上传设计稿
+                        </button>
+                        
+                        <button class="btn btn-secondary" onclick="editRequirement()" id="editBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                            编辑需求
+                        </button>
+                        
+                        <button class="btn btn-success" onclick="startReview()" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            开始复盘
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 协作信息 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        协作信息
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="collaborator-info">
+                        <div class="collaborator-avatar">李</div>
+                        <div class="collaborator-name">李设计师</div>
+                        <div class="collaborator-role">主设计师</div>
+                        <div class="last-update">最后更新：2小时前</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 相关文件 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                            <polyline points="13,2 13,9 20,9"></polyline>
+                        </svg>
+                        相关文件
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="file-list">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <div class="file-icon">PDF</div>
+                                <div class="file-name">需求说明书.pdf</div>
+                            </div>
+                            <a href="#" class="file-download" onclick="downloadFile('requirement.pdf')">下载</a>
+                        </div>
+                        
+                        <div class="file-item">
+                            <div class="file-info">
+                                <div class="file-icon">ZIP</div>
+                                <div class="file-name">参考图片.zip</div>
+                            </div>
+                            <a href="#" class="file-download" onclick="downloadFile('references.zip')">下载</a>
+                        </div>
+                        
+                        <div class="file-item">
+                            <div class="file-info">
+                                <div class="file-icon">AI</div>
+                                <div class="file-name">设计源文件.ai</div>
+                            </div>
+                            <a href="#" class="file-download" onclick="downloadFile('design.ai')" style="color: #9ca3af;">待上传</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 图片预览遮罩 -->
+    <div class="image-overlay" id="imageOverlay" onclick="closeImagePreview()">
+        <button class="overlay-close">×</button>
+        <img class="overlay-image" id="overlayImage" src="" alt="预览图">
+    </div>
+
+    <script>
+        // 全局状态
+        let currentUser = {
+            role: 'designer', // client, designer, operator
+            name: '李设计师',
+            permissions: ['upload', 'status-change']
+        };
+
+        let projectData = {
+            id: 'PROJ-2024-001',
+            name: '春季休闲T恤设计',
+            status: 'designing',
+            client: '潮流品牌有限公司',
+            designer: '李设计师',
+            createdAt: '2024-03-15T14:30:00',
+            updatedAt: '2024-03-16T11:20:00'
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            setupPermissions();
+            setupImageGallery();
+        });
+
+        function initializePage() {
+            console.log('项目详情页初始化完成');
+            updateLastUpdateTime();
+        }
+
+        // 权限控制
+        function setupPermissions() {
+            const statusBtn = document.getElementById('statusBtn');
+            const editBtn = document.getElementById('editBtn');
+            
+            // 根据角色显示/隐藏操作按钮
+            switch(currentUser.role) {
+                case 'client':
+                    statusBtn.style.display = 'none';
+                    break;
+                case 'designer':
+                    editBtn.style.display = 'none';
+                    break;
+                case 'operator':
+                    // 运营可以进行所有操作
+                    break;
+            }
+        }
+
+        // 返回上一页
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'workspace-board.html';
+            }
+        }
+
+        // 状态变更
+        function changeStatus() {
+            const currentStatus = projectData.status;
+            let nextStatus = '';
+            let nextStatusText = '';
+            
+            switch(currentStatus) {
+                case 'pending':
+                    nextStatus = 'designing';
+                    nextStatusText = '设计中';
+                    break;
+                case 'designing':
+                    nextStatus = 'ready';
+                    nextStatusText = '待交付';
+                    break;
+                case 'ready':
+                    nextStatus = 'testing';
+                    nextStatusText = '预售测试';
+                    break;
+                case 'testing':
+                    nextStatus = 'completed';
+                    nextStatusText = '已复盘';
+                    break;
+            }
+            
+            if (nextStatus) {
+                projectData.status = nextStatus;
+                projectData.updatedAt = new Date().toISOString();
+                updateProjectStatus(nextStatus, nextStatusText);
+                showNotification(`项目状态已更新为"${nextStatusText}"`, 'success');
+            }
+        }
+
+        function updateProjectStatus(status, statusText) {
+            // 更新状态标签
+            const statusBadge = document.querySelector('.status-badge');
+            statusBadge.className = `status-badge ${status}`;
+            statusBadge.textContent = statusText;
+            
+            // 更新状态按钮
+            const statusBtn = document.getElementById('statusBtn');
+            const nextStatusMap = {
+                'designing': '标记为待交付',
+                'ready': '标记为预售测试',
+                'testing': '标记为已复盘',
+                'completed': '项目已完成'
+            };
+            
+            const nextText = nextStatusMap[status];
+            if (nextText) {
+                statusBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                    ${nextText}
+                `;
+                
+                if (status === 'completed') {
+                    statusBtn.disabled = true;
+                    statusBtn.classList.add('btn-success');
+                    statusBtn.classList.remove('btn-primary');
+                }
+            }
+            
+            // 更新时间轴
+            updateTimeline(status);
+            
+            // 如果是完成状态，启用复盘按钮
+            if (status === 'ready') {
+                const reviewBtn = document.querySelector('button[onclick="startReview()"]');
+                reviewBtn.disabled = false;
+            }
+        }
+
+        function updateTimeline(currentStatus) {
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const statusOrder = ['pending', 'designing', 'ready', 'testing', 'completed'];
+            const currentIndex = statusOrder.indexOf(currentStatus);
+            
+            timelineItems.forEach((item, index) => {
+                item.classList.remove('active', 'completed');
+                if (index < currentIndex) {
+                    item.classList.add('completed');
+                } else if (index === currentIndex) {
+                    item.classList.add('active');
+                    // 更新当前项的时间
+                    const timeElement = item.querySelector('.timeline-time');
+                    timeElement.textContent = new Date().toLocaleString('zh-CN');
+                }
+            });
+        }
+
+        // 上传设计稿
+        function uploadDesign() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,.ai,.psd';
+            input.multiple = true;
+            
+            input.onchange = function(e) {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    // 模拟上传过程
+                    showNotification('设计稿上传中...', 'info');
+                    
+                    setTimeout(() => {
+                        // 更新主图显示
+                        updateMainImage(files[0]);
+                        showNotification(`已上传 ${files.length} 个文件`, 'success');
+                        
+                        // 启用状态变更按钮
+                        const statusBtn = document.getElementById('statusBtn');
+                        statusBtn.disabled = false;
+                    }, 2000);
+                }
+            };
+            
+            input.click();
+        }
+
+        function updateMainImage(file) {
+            const mainImage = document.getElementById('mainImage');
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                mainImage.innerHTML = `
+                    <img src="${e.target.result}" alt="设计稿" onclick="previewImage('${e.target.result}')">
+                    <div class="image-actions">
+                        <button class="action-btn" onclick="previewImage('${e.target.result}')" title="预览">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="downloadImage()" title="下载">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7,10 12,15 17,10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // 编辑需求
+        function editRequirement() {
+            showNotification('正在打开需求编辑器...', 'info');
+            // 这里可以打开编辑弹框或跳转到编辑页面
+        }
+
+        // 开始复盘
+        function startReview() {
+            showNotification('正在打开复盘编辑器...', 'info');
+            // 跳转到复盘页面
+            setTimeout(() => {
+                window.location.href = 'review-editor.html?project=' + projectData.id;
+            }, 1000);
+        }
+
+        // 图片预览
+        function previewImage(imageSrc) {
+            const overlay = document.getElementById('imageOverlay');
+            const overlayImage = document.getElementById('overlayImage');
+            
+            if (imageSrc) {
+                overlayImage.src = imageSrc;
+            } else {
+                // 如果没有图片，显示提示
+                showNotification('暂无设计稿可预览', 'warning');
+                return;
+            }
+            
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImagePreview() {
+            const overlay = document.getElementById('imageOverlay');
+            overlay.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 下载图片
+        function downloadImage() {
+            const mainImage = document.querySelector('#mainImage img');
+            if (mainImage) {
+                const link = document.createElement('a');
+                link.href = mainImage.src;
+                link.download = `${projectData.name}-设计稿.jpg`;
+                link.click();
+                showNotification('设计稿下载中...', 'info');
+            } else {
+                showNotification('暂无设计稿可下载', 'warning');
+            }
+        }
+
+        // 下载文件
+        function downloadFile(filename) {
+            showNotification(`正在下载 ${filename}...`, 'info');
+            // 模拟文件下载
+        }
+
+        // 设置图片画廊
+        function setupImageGallery() {
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            thumbnails.forEach((thumbnail, index) => {
+                thumbnail.addEventListener('click', function() {
+                    // 移除所有活动状态
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    // 添加当前活动状态
+                    this.classList.add('active');
+                    
+                    // 这里可以更新主图显示
+                    // updateMainImage(imageData[index]);
+                });
+            });
+        }
+
+        // 更新最后更新时间
+        function updateLastUpdateTime() {
+            const lastUpdate = document.querySelector('.last-update');
+            const updateTime = new Date(projectData.updatedAt);
+            const now = new Date();
+            const diff = Math.floor((now - updateTime) / (1000 * 60)); // 分钟差
+            
+            let timeText = '';
+            if (diff < 1) {
+                timeText = '刚刚';
+            } else if (diff < 60) {
+                timeText = `${diff}分钟前`;
+            } else if (diff < 1440) {
+                timeText = `${Math.floor(diff / 60)}小时前`;
+            } else {
+                timeText = updateTime.toLocaleDateString('zh-CN');
+            }
+            
+            lastUpdate.textContent = `最后更新：${timeText}`;
+        }
+
+        // 通知系统
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 6px;
+                color: white;
+                font-size: 14px;
+                z-index: 3000;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            `;
+            
+            const colors = {
+                'success': '#10b981',
+                'error': '#ef4444',
+                'warning': '#f59e0b',
+                'info': '#3b82f6'
+            };
+            
+            notification.style.backgroundColor = colors[type] || colors.info;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // ESC 关闭图片预览
+            if (e.key === 'Escape') {
+                closeImagePreview();
+            }
+            
+            // 快捷键操作
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        changeStatus();
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        uploadDesign();
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        editRequirement();
+                        break;
+                }
+            }
+        });
+
+        // 定期更新时间显示
+        setInterval(updateLastUpdateTime, 60000); // 每分钟更新一次
+    </script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求⇄复盘协同板 - 低保真线框图</title>
+    <style>
+        /* 线框图基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.4;
+            padding: 20px;
+        }
+
+        /* 线框图容器 */
+        .wireframe-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #ccc;
+            padding: 20px;
+        }
+
+        /* 页面头部线框 */
+        .wireframe-header {
+            text-align: center;
+            border: 1px dashed #999;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: #fafafa;
+        }
+
+        .wireframe-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .wireframe-subtitle {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* 主内容区线框 */
+        .wireframe-main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* 模块容器线框 */
+        .wireframe-module {
+            border: 2px solid #999;
+            background: white;
+            min-height: 300px;
+        }
+
+        .wireframe-module-header {
+            background: #e0e0e0;
+            padding: 15px;
+            border-bottom: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wireframe-module-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .wireframe-button {
+            border: 1px solid #666;
+            background: #f0f0f0;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .wireframe-button:hover {
+            background: #e0e0e0;
+        }
+
+        /* 复盘卡片线框 */
+        .wireframe-review {
+            padding: 20px;
+        }
+
+        .wireframe-review-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1px;
+            background: #ccc;
+            margin-top: 15px;
+        }
+
+        .wireframe-review-column {
+            background: white;
+            padding: 15px;
+            min-height: 150px;
+            border: 1px dashed #aaa;
+        }
+
+        .wireframe-review-column-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: center;
+            padding-bottom: 5px;
+        }
+
+        .wireframe-review-column.highlights .wireframe-review-column-title {
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        .wireframe-review-column.metrics .wireframe-review-column-title {
+            border-bottom: 2px solid #7ed321;
+        }
+
+        .wireframe-review-column.improvements .wireframe-review-column-title {
+            border-bottom: 2px solid #f5a623;
+        }
+
+        .wireframe-text-block {
+            background: #f8f8f8;
+            border: 1px dashed #bbb;
+            padding: 10px;
+            height: 80px;
+            position: relative;
+        }
+
+        .wireframe-text-lines {
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(transparent 0px, transparent 12px, #ddd 12px, #ddd 14px),
+                linear-gradient(transparent 14px, transparent 26px, #ddd 26px, #ddd 28px),
+                linear-gradient(transparent 28px, transparent 40px, #ddd 40px, #ddd 42px),
+                linear-gradient(transparent 42px, transparent 54px, #ddd 54px, #ddd 56px);
+        }
+
+        .wireframe-expand-btn {
+            font-size: 10px;
+            color: #4a90e2;
+            text-decoration: underline;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        /* 表单线框 */
+        .wireframe-form {
+            padding: 20px;
+        }
+
+        .wireframe-form-group {
+            margin-bottom: 20px;
+            border: 1px dashed #ccc;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .wireframe-label {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .wireframe-label.required::after {
+            content: " *";
+            color: red;
+        }
+
+        .wireframe-input {
+            width: 100%;
+            height: 35px;
+            border: 1px solid #999;
+            background: white;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        .wireframe-radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .wireframe-radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .wireframe-radio {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #999;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .wireframe-price-range {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wireframe-price-range input {
+            flex: 1;
+        }
+
+        .wireframe-tag-container {
+            border: 1px solid #999;
+            min-height: 40px;
+            padding: 8px;
+            background: white;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .wireframe-tag {
+            background: #e0e0e0;
+            border: 1px solid #999;
+            padding: 3px 8px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .wireframe-tag-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .wireframe-submit-area {
+            text-align: right;
+            padding: 15px;
+            border-top: 1px solid #ccc;
+            background: #f8f8f8;
+        }
+
+        .wireframe-submit-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        /* 看板线框 */
+        .wireframe-kanban {
+            border: 2px solid #999;
+            background: white;
+        }
+
+        .wireframe-kanban-header {
+            background: #e0e0e0;
+            padding: 15px;
+            border-bottom: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wireframe-kanban-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .wireframe-select {
+            border: 1px solid #999;
+            padding: 5px;
+            background: white;
+        }
+
+        .wireframe-kanban-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background: #ccc;
+            min-height: 400px;
+        }
+
+        .wireframe-kanban-column {
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wireframe-kanban-column-header {
+            background: #f0f0f0;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .wireframe-kanban-content {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .wireframe-kanban-card {
+            border: 1px solid #999;
+            background: white;
+            min-height: 120px;
+            padding: 10px;
+            cursor: move;
+        }
+
+        .wireframe-kanban-card:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .wireframe-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .wireframe-card-id {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .wireframe-status-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border: 1px solid #999;
+            background: #e0e0e0;
+        }
+
+        .wireframe-card-body {
+            margin-bottom: 8px;
+        }
+
+        .wireframe-thumbnail {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #999;
+            background: #f0f0f0;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .wireframe-card-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .wireframe-card-info {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .wireframe-card-time {
+            font-size: 9px;
+            color: #999;
+            text-align: right;
+        }
+
+        /* 响应式线框 */
+        @media (max-width: 768px) {
+            .wireframe-main {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .wireframe-review-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wireframe-kanban-board {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .wireframe-kanban-board {
+                grid-template-columns: 1fr;
+            }
+
+            .wireframe-radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* 注释样式 */
+        .wireframe-annotation {
+            position: relative;
+            background: #fff3cd;
+            border: 1px dashed #856404;
+            padding: 8px;
+            margin: 10px 0;
+            font-size: 11px;
+            color: #856404;
+        }
+
+        .wireframe-annotation::before {
+            content: "📝 ";
+        }
+    </style>
+</head>
+<body>
+    <div class="wireframe-container">
+        <!-- 页面头部 -->
+        <div class="wireframe-header">
+            <div class="wireframe-title">需求⇄复盘协同板</div>
+            <div class="wireframe-subtitle">上轮交付复盘要点回顾 → 新轮需求表单填报 → 进度&反馈追踪</div>
+        </div>
+
+        <div class="wireframe-annotation">
+            页面头部：居中显示主标题和副标题，提供系统功能概览
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="wireframe-main">
+            <!-- 复盘卡片模块 -->
+            <div class="wireframe-module">
+                <div class="wireframe-module-header">
+                    <div class="wireframe-module-title">上轮交付复盘</div>
+                    <div class="wireframe-button">一键应用</div>
+                </div>
+                <div class="wireframe-review">
+                    <div class="wireframe-annotation">
+                        复盘卡片模块：展示上一轮项目的设计亮点、市场数据和问题改进
+                    </div>
+                    <div class="wireframe-review-grid">
+                        <div class="wireframe-review-column highlights">
+                            <div class="wireframe-review-column-title">设计亮点</div>
+                            <div class="wireframe-text-block">
+                                <div class="wireframe-text-lines"></div>
+                            </div>
+                            <div class="wireframe-expand-btn">展开 ↓</div>
+                        </div>
+                        <div class="wireframe-review-column metrics">
+                            <div class="wireframe-review-column-title">市场数据</div>
+                            <div class="wireframe-text-block">
+                                <div class="wireframe-text-lines"></div>
+                            </div>
+                            <div class="wireframe-expand-btn">展开 ↓</div>
+                        </div>
+                        <div class="wireframe-review-column improvements">
+                            <div class="wireframe-review-column-title">问题改进</div>
+                            <div class="wireframe-text-block">
+                                <div class="wireframe-text-lines"></div>
+                            </div>
+                            <div class="wireframe-expand-btn">展开 ↓</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 需求表单模块 -->
+            <div class="wireframe-module">
+                <div class="wireframe-module-header">
+                    <div class="wireframe-module-title">新需求填报</div>
+                </div>
+                <div class="wireframe-form">
+                    <div class="wireframe-annotation">
+                        需求表单模块：客户填写新需求信息，支持实时校验和复盘要点关联
+                    </div>
+                    
+                    <!-- 目标人群字段 -->
+                    <div class="wireframe-form-group">
+                        <label class="wireframe-label required">目标人群</label>
+                        <div class="wireframe-radio-group">
+                            <div class="wireframe-radio-item">
+                                <div class="wireframe-radio"></div>
+                                <span>20-30岁女性</span>
+                            </div>
+                            <div class="wireframe-radio-item">
+                                <div class="wireframe-radio"></div>
+                                <span>30-40岁女性</span>
+                            </div>
+                            <div class="wireframe-radio-item">
+                                <div class="wireframe-radio"></div>
+                                <span>40-50岁女性</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 品类字段 -->
+                    <div class="wireframe-form-group">
+                        <label class="wireframe-label required">品类</label>
+                        <input type="text" class="wireframe-input" placeholder="请输入品类（如：连衣裙、牛仔裤等）">
+                        <div style="font-size: 10px; color: #999; margin-top: 3px;">字符限制：≤20字</div>
+                    </div>
+
+                    <!-- 价位带字段 -->
+                    <div class="wireframe-form-group">
+                        <label class="wireframe-label">价位带</label>
+                        <div class="wireframe-price-range">
+                            <input type="number" class="wireframe-input" placeholder="最低价">
+                            <span>～</span>
+                            <input type="number" class="wireframe-input" placeholder="最高价">
+                        </div>
+                    </div>
+
+                    <!-- 灵感词字段 -->
+                    <div class="wireframe-form-group">
+                        <label class="wireframe-label">灵感词</label>
+                        <div class="wireframe-tag-container">
+                            <div class="wireframe-tag">
+                                简约 <span class="wireframe-tag-remove">×</span>
+                            </div>
+                            <div class="wireframe-tag">
+                                优雅 <span class="wireframe-tag-remove">×</span>
+                            </div>
+                            <input type="text" style="border: none; outline: none; flex: 1;" placeholder="输入标签按回车添加">
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc;">
+                            <div style="font-size: 10px; color: #999; margin-bottom: 5px;">已关联的复盘标签：</div>
+                            <div class="wireframe-tag" style="background: #d4edda;">
+                                色彩搭配 <span class="wireframe-tag-remove">×</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wireframe-submit-area">
+                        <button class="wireframe-submit-btn">提交需求</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 协同看板模块 -->
+        <div class="wireframe-kanban">
+            <div class="wireframe-kanban-header">
+                <div class="wireframe-module-title">需求协同看板</div>
+                <div class="wireframe-kanban-controls">
+                    <select class="wireframe-select">
+                        <option>所有角色</option>
+                        <option>客户视角</option>
+                        <option>设计师视角</option>
+                        <option>运营视角</option>
+                    </select>
+                    <button class="wireframe-button">导出数据</button>
+                </div>
+            </div>
+            
+            <div class="wireframe-annotation">
+                协同看板模块：5列状态管理，支持拖拽变更状态，实时显示项目进度
+            </div>
+
+            <div class="wireframe-kanban-board">
+                <!-- 需求待确认列 -->
+                <div class="wireframe-kanban-column">
+                    <div class="wireframe-kanban-column-header">需求待确认 (2)</div>
+                    <div class="wireframe-kanban-content">
+                        <div class="wireframe-kanban-card">
+                            <div class="wireframe-card-header">
+                                <div class="wireframe-card-id">DEM001</div>
+                                <div class="wireframe-status-tag">待确认</div>
+                            </div>
+                            <div class="wireframe-card-body">
+                                <div class="wireframe-thumbnail"></div>
+                                <div class="wireframe-card-title">春季女装连衣裙设计</div>
+                                <div class="wireframe-card-info">目标：25-35岁女性</div>
+                                <div class="wireframe-card-info">品类：连衣裙</div>
+                                <div class="wireframe-card-info">价位：¥199-399</div>
+                            </div>
+                            <div class="wireframe-card-time">2024-01-15 14:30</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设计中列 -->
+                <div class="wireframe-kanban-column">
+                    <div class="wireframe-kanban-column-header">设计中 (1)</div>
+                    <div class="wireframe-kanban-content">
+                        <div class="wireframe-kanban-card">
+                            <div class="wireframe-card-header">
+                                <div class="wireframe-card-id">DEM002</div>
+                                <div class="wireframe-status-tag">设计中</div>
+                            </div>
+                            <div class="wireframe-card-body">
+                                <div class="wireframe-thumbnail"></div>
+                                <div class="wireframe-card-title">夏季休闲上衣设计</div>
+                                <div class="wireframe-card-info">目标：20-30岁女性</div>
+                                <div class="wireframe-card-info">品类：上衣</div>
+                            </div>
+                            <div class="wireframe-card-time">2024-01-14 16:45</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预售测试列 -->
+                <div class="wireframe-kanban-column">
+                    <div class="wireframe-kanban-column-header">预售测试 (3)</div>
+                    <div class="wireframe-kanban-content">
+                        <div class="wireframe-kanban-card">
+                            <div class="wireframe-card-header">
+                                <div class="wireframe-card-id">DEM003</div>
+                                <div class="wireframe-status-tag">预售测试</div>
+                            </div>
+                            <div class="wireframe-card-body">
+                                <div class="wireframe-thumbnail"></div>
+                                <div class="wireframe-card-title">秋季外套设计</div>
+                                <div class="wireframe-card-info">目标：30-40岁女性</div>
+                            </div>
+                            <div class="wireframe-card-time">2024-01-13 09:20</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 待交付列 -->
+                <div class="wireframe-kanban-column">
+                    <div class="wireframe-kanban-column-header">待交付 (1)</div>
+                    <div class="wireframe-kanban-content">
+                        <div class="wireframe-kanban-card">
+                            <div class="wireframe-card-header">
+                                <div class="wireframe-card-id">DEM004</div>
+                                <div class="wireframe-status-tag">待交付</div>
+                            </div>
+                            <div class="wireframe-card-body">
+                                <div class="wireframe-thumbnail"></div>
+                                <div class="wireframe-card-title">职场西装套装</div>
+                                <div class="wireframe-card-info">目标：25-35岁女性</div>
+                            </div>
+                            <div class="wireframe-card-time">2024-01-12 11:15</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已复盘列 -->
+                <div class="wireframe-kanban-column">
+                    <div class="wireframe-kanban-column-header">已复盘 (5)</div>
+                    <div class="wireframe-kanban-content">
+                        <div class="wireframe-kanban-card">
+                            <div class="wireframe-card-header">
+                                <div class="wireframe-card-id">DEM005</div>
+                                <div class="wireframe-status-tag">已复盘</div>
+                            </div>
+                            <div class="wireframe-card-body">
+                                <div class="wireframe-thumbnail"></div>
+                                <div class="wireframe-card-title">夏季牛仔裤设计</div>
+                                <div class="wireframe-card-info">目标：20-30岁女性</div>
+                            </div>
+                            <div class="wireframe-card-time">2024-01-10 15:30</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 线框图说明 -->
+        <div class="wireframe-annotation" style="margin-top: 20px;">
+            <strong>交互说明：</strong><br>
+            • 复盘卡片支持展开/折叠长文本（>600字时默认折叠4行）<br>
+            • "一键应用"按钮将复盘要点自动关联到需求表单<br>
+            • 表单支持实时校验，错误时禁用提交按钮<br>
+            • 看板卡片支持拖拽变更状态，触发API调用和WebSocket通知<br>
+            • 角色过滤器支持不同权限视角切换<br>
+            • 导出功能支持CSV格式数据导出
+        </div>
+
+        <div class="wireframe-annotation">
+            <strong>技术要点：</strong><br>
+            • 响应式布局：桌面端2列，平板端1列，移动端堆叠<br>
+            • API集成：PATCH /orders/{id}/status, GET /export?type=csv, POST /ws/notify<br>
+            • 数据模型：DemandBoard接口定义5种状态，ReviewCard接口定义3类复盘内容<br>
+            • 异常处理：表单校验失败、状态冲突、首轮无复盘数据等场景
+        </div>
+    </div>
+
+    <script>
+        // 线框图交互演示
+        document.addEventListener('DOMContentLoaded', function() {
+            // 展开/折叠演示
+            const expandBtns = document.querySelectorAll('.wireframe-expand-btn');
+            expandBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.textContent.includes('展开')) {
+                        this.textContent = '折叠 ↑';
+                        this.previousElementSibling.style.height = '120px';
+                    } else {
+                        this.textContent = '展开 ↓';
+                        this.previousElementSibling.style.height = '80px';
+                    }
+                });
+            });
+
+            // 一键应用演示
+            const applyBtn = document.querySelector('.wireframe-button');
+            applyBtn.addEventListener('click', function() {
+                alert('线框图演示：复盘要点已应用到需求表单');
+                this.textContent = '已应用';
+                this.style.background = '#d4edda';
+            });
+
+            // 简单的拖拽演示
+            const cards = document.querySelectorAll('.wireframe-kanban-card');
+            cards.forEach(card => {
+                card.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', '');
+                    this.style.opacity = '0.5';
+                });
+
+                card.addEventListener('dragend', function() {
+                    this.style.opacity = '1';
+                });
+
+                card.setAttribute('draggable', 'true');
+            });
+
+            // 提交按钮演示
+            const submitBtn = document.querySelector('.wireframe-submit-btn');
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('线框图演示：需求提交成功，新卡片将出现在"需求待确认"列');
+            });
+        });
+    </script>
+</body>
+</html>

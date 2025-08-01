@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "Figma MCP HTTP Server": {
+      "url": "http://localhost:3000/mcp"
+    },
+    "Figma MCP HTTP Server": {
+      "url": "http://localhost:3000/mcp"
+    },
+    "File System MCP": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "--stdio"]
+    },
+    "GitHub MCP": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github", "--stdio"]
+    },
+    "Brave Search MCP": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search", "--stdio"]
+    },
+    "PostgreSQL MCP": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "--stdio"]
+    },
+    "SQLite MCP": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--stdio"]
+    }
+  }
+} 

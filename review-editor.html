@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目复盘 - AIGC服装设计</title>
+    <style>
+        /* 全局样式重置与基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #ffffff;
+            color: #4b5563;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 配色方案变量 */
+        :root {
+            --primary-blue: #3b82f6;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --error-red: #ef4444;
+            --neutral-gray: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-body: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+        }
+
+        /* 顶部操作栏 */
+        .header {
+            height: 60px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-blue);
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .project-info {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: 12px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-body);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 主编辑区域 */
+        .editor-container {
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+            display: flex;
+        }
+
+        /* 三栏编辑器 */
+        .editor-columns {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .editor-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        .editor-column:last-child {
+            border-right: none;
+        }
+
+        /* 列标题栏 */
+        .column-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .column-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .column-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .highlights-column .column-icon {
+            background: var(--success-green);
+        }
+
+        .market-data-column .column-icon {
+            background: var(--primary-blue);
+        }
+
+        .issues-column .column-icon {
+            background: var(--warning-orange);
+        }
+
+        .word-count {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* 编辑器内容区 */
+        .editor-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* 富文本编辑器 */
+        .rich-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            color: var(--text-body);
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .editor-textarea {
+            flex: 1;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-body);
+            background: transparent;
+            padding: 12px 0;
+        }
+
+        .editor-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 模板提示区域 */
+        .template-hints {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            border-left: 3px solid var(--primary-blue);
+        }
+
+        .template-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .template-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .template-item {
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .template-item:hover {
+            background: var(--bg-primary);
+            color: var(--primary-blue);
+        }
+
+        /* 数据输入组件 */
+        .data-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-field {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-body);
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-field[type="number"] {
+            text-align: right;
+        }
+
+        /* 评分组件 */
+        .rating-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+            color: var(--border-color);
+        }
+
+        .star:hover,
+        .star.active {
+            color: #fbbf24;
+        }
+
+        .rating-value {
+            font-size: 14px;
+            color: var(--text-body);
+            margin-left: 8px;
+        }
+
+        /* 图表预览 */
+        .chart-preview {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .bar-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            width: 60px;
+        }
+
+        .bar-visual {
+            flex: 1;
+            height: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .bar-value {
+            font-size: 11px;
+            color: var(--text-body);
+            font-weight: 500;
+            width: 40px;
+            text-align: right;
+        }
+
+        /* 问题列表编辑器 */
+        .issues-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .issue-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .issue-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .priority-select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-body);
+        }
+
+        .remove-issue {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: var(--error-red);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .issue-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .issue-textarea {
+            border: none;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 13px;
+            resize: none;
+            min-height: 60px;
+        }
+
+        .add-issue-btn {
+            padding: 12px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .add-issue-btn:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .editor-columns {
+                flex-direction: column;
+            }
+            
+            .editor-column {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                min-height: 400px;
+            }
+            
+            .editor-column:last-child {
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 16px;
+            }
+            
+            .header-left {
+                gap: 8px;
+            }
+            
+            .project-info {
+                display: none;
+            }
+            
+            .editor-content {
+                padding: 16px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+
+        /* 自动保存指示器 */
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            background: var(--success-green);
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .auto-save-indicator.show {
+            opacity: 1;
+        }
+
+        /* 滚动条样式 */
+        .editor-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .editor-content::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .editor-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .editor-content::-webkit-scrollbar-thumb:hover {
+            background: var(--neutral-gray);
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部操作栏 -->
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="goBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div>
+                <span class="header-title">项目复盘</span>
+                <span class="project-info">春季休闲T恤设计 - PROJ-2024-001</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-secondary" onclick="saveDraft()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17,21 17,13 7,13 7,21"></polyline>
+                    <polyline points="7,3 7,8 15,8"></polyline>
+                </svg>
+                保存草稿
+            </button>
+            <button class="btn btn-primary" id="submitBtn" onclick="submitReview()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9,11 12,14 22,4"></polyline>
+                    <path d="M21,12v7a2 2 0 0 1-2,2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                提交复盘
+            </button>
+        </div>
+    </header>
+
+    <!-- 主编辑区域 -->
+    <main class="editor-container">
+        <div class="editor-columns">
+            <!-- 设计亮点栏 -->
+            <div class="editor-column highlights-column">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="column-icon">✨</div>
+                        设计亮点
+                    </div>
+                    <div class="word-count" id="highlightsWordCount">0/2000</div>
+                </div>
+                <div class="editor-content">
+                    <div class="rich-editor">
+                        <div class="editor-toolbar">
+                            <button class="toolbar-btn" onclick="formatText('bold')" title="加粗">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" onclick="formatText('italic')" title="斜体">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="19" y1="4" x2="10" y2="4"></line>
+                                    <line x1="14" y1="20" x2="5" y2="20"></line>
+                                    <line x1="15" y1="4" x2="9" y2="20"></line>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" onclick="insertList()" title="列表">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                            </button>
+                            <button class="toolbar-btn" onclick="insertImage('highlights')" title="插入图片">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21,15 16,10 5,21"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                        <textarea 
+                            class="editor-textarea" 
+                            id="highlightsEditor"
+                            placeholder="描述本次设计的亮点和创新之处，包括设计理念、视觉效果、工艺特色等..."
+                            oninput="updateWordCount('highlights')"
+                            maxlength="2000"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="template-hints">
+                        <div class="template-title">常用模板</div>
+                        <div class="template-list">
+                            <div class="template-item" onclick="insertTemplate('highlights', '本次设计在色彩搭配上...')">• 色彩搭配亮点</div>
+                            <div class="template-item" onclick="insertTemplate('highlights', '设计师巧妙运用了...')">• 设计技巧运用</div>
+                            <div class="template-item" onclick="insertTemplate('highlights', '面料选择上采用了...')">• 面料工艺创新</div>
+                            <div class="template-item" onclick="insertTemplate('highlights', '整体设计风格...')">• 风格特色总结</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 市场数据表现栏 -->
+            <div class="editor-column market-data-column">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="column-icon">📊</div>
+                        市场数据表现
+                    </div>
+                    <div class="word-count" id="marketDataWordCount">0/2000</div>
+                </div>
+                <div class="editor-content">
+                    <div class="data-inputs">
+                        <!-- 销量数据 -->
+                        <div class="input-group">
+                            <label class="input-label">销量数据 (单位: 件)</label>
+                            <input type="number" class="input-field" id="salesVolume" placeholder="输入销量数据" oninput="updateChart()">
+                        </div>
+                        
+                        <!-- 转化率 -->
+                        <div class="input-group">
+                            <label class="input-label">转化率 (%)</label>
+                            <input type="number" class="input-field" id="conversionRate" placeholder="输入转化率" step="0.1" max="100" oninput="updateChart()">
+                        </div>
+                        
+                        <!-- 用户反馈评分 -->
+                        <div class="input-group">
+                            <label class="input-label">用户反馈评分</label>
+                            <div class="rating-input">
+                                <div class="star-rating" id="userRating">
+                                    <svg class="star" onclick="setRating(1)" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                    </svg>
+                                    <svg class="star" onclick="setRating(2)" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                    </svg>
+                                    <svg class="star" onclick="setRating(3)" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                    </svg>
+                                    <svg class="star" onclick="setRating(4)" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                    </svg>
+                                    <svg class="star" onclick="setRating(5)" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                    </svg>
+                                </div>
+                                <span class="rating-value" id="ratingValue">0分</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户反馈文字 -->
+                        <div class="input-group">
+                            <label class="input-label">用户反馈详情</label>
+                            <textarea 
+                                class="input-field" 
+                                id="userFeedback" 
+                                rows="4" 
+                                placeholder="总结用户的反馈意见和建议..."
+                                oninput="updateWordCount('marketData')"
+                                maxlength="1000"
+                            ></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- 图表预览 -->
+                    <div class="chart-preview">
+                        <div class="chart-title">数据可视化预览</div>
+                        <div class="chart-bar">
+                            <div class="bar-label">销量</div>
+                            <div class="bar-visual">
+                                <div class="bar-fill" id="salesBar" style="width: 0%"></div>
+                            </div>
+                            <div class="bar-value" id="salesValue">0</div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="bar-label">转化率</div>
+                            <div class="bar-visual">
+                                <div class="bar-fill" id="conversionBar" style="width: 0%"></div>
+                            </div>
+                            <div class="bar-value" id="conversionValue">0%</div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="bar-label">用户评分</div>
+                            <div class="bar-visual">
+                                <div class="bar-fill" id="ratingBar" style="width: 0%"></div>
+                            </div>
+                            <div class="bar-value" id="ratingBarValue">0分</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问题&改进栏 -->
+            <div class="editor-column issues-column">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="column-icon">⚠️</div>
+                        问题 & 改进
+                    </div>
+                    <div class="word-count" id="issuesWordCount">0/2000</div>
+                </div>
+                <div class="editor-content">
+                    <div class="issues-list" id="issuesList">
+                        <!-- 默认问题项 -->
+                        <div class="issue-item">
+                            <div class="issue-header">
+                                <select class="priority-select">
+                                    <option value="high">高优先级</option>
+                                    <option value="medium" selected>中优先级</option>
+                                    <option value="low">低优先级</option>
+                                </select>
+                                <button class="remove-issue" onclick="removeIssue(this)">×</button>
+                            </div>
+                            <div class="issue-content">
+                                <textarea 
+                                    class="issue-textarea" 
+                                    placeholder="问题描述..."
+                                    oninput="updateWordCount('issues')"
+                                ></textarea>
+                                <textarea 
+                                    class="issue-textarea" 
+                                    placeholder="改进建议..."
+                                    oninput="updateWordCount('issues')"
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="add-issue-btn" onclick="addIssue()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        添加新问题
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 自动保存指示器 -->
+    <div class="auto-save-indicator" id="autoSaveIndicator">
+        已自动保存
+    </div>
+
+    <script>
+        // 全局数据
+        let reviewData = {
+            projectId: 'PROJ-2024-001',
+            highlights: '',
+            marketData: {
+                salesVolume: 0,
+                conversionRate: 0,
+                userRating: 0,
+                userFeedback: ''
+            },
+            issues: [],
+            lastSaved: null
+        };
+
+        let currentRating = 0;
+        let autoSaveTimer = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEditor();
+            setupAutoSave();
+            loadDraftData();
+        });
+
+        function initializeEditor() {
+            console.log('复盘编辑器初始化完成');
+            
+            // 初始化评分显示
+            updateRatingDisplay(0);
+            
+            // 绑定输入事件
+            setupInputListeners();
+        }
+
+        function setupInputListeners() {
+            // 监听所有输入框的变化
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    scheduleAutoSave();
+                });
+            });
+        }
+
+        // 自动保存设置
+        function setupAutoSave() {
+            setInterval(() => {
+                saveDraftData();
+            }, 30000); // 每30秒自动保存
+        }
+
+        function scheduleAutoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                saveDraftData();
+            }, 2000); // 停止输入2秒后保存
+        }
+
+        // 字数统计
+        function updateWordCount(section) {
+            let wordCount = 0;
+            let maxWords = 2000;
+            
+            switch(section) {
+                case 'highlights':
+                    const highlightsEditor = document.getElementById('highlightsEditor');
+                    wordCount = highlightsEditor.value.length;
+                    document.getElementById('highlightsWordCount').textContent = `${wordCount}/${maxWords}`;
+                    break;
+                    
+                case 'marketData':
+                    const userFeedback = document.getElementById('userFeedback');
+                    wordCount = userFeedback.value.length;
+                    maxWords = 1000;
+                    document.getElementById('marketDataWordCount').textContent = `${wordCount}/${maxWords}`;
+                    break;
+                    
+                case 'issues':
+                    const issueTextareas = document.querySelectorAll('.issue-textarea');
+                    wordCount = Array.from(issueTextareas).reduce((total, textarea) => {
+                        return total + textarea.value.length;
+                    }, 0);
+                    document.getElementById('issuesWordCount').textContent = `${wordCount}/${maxWords}`;
+                    break;
+            }
+        }
+
+        // 富文本编辑功能
+        function formatText(command) {
+            document.execCommand(command, false, null);
+        }
+
+        function insertList() {
+            document.execCommand('insertUnorderedList');
+        }
+
+        function insertImage(section) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = `<img src="${e.target.result}" style="max-width: 100%; height: auto; margin: 8px 0;">`;
+                        document.execCommand('insertHTML', false, img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            input.click();
+        }
+
+        // 模板插入
+        function insertTemplate(section, template) {
+            const editor = document.getElementById(section === 'highlights' ? 'highlightsEditor' : 'userFeedback');
+            const currentValue = editor.value;
+            const newValue = currentValue ? currentValue + '\n\n' + template : template;
+            editor.value = newValue;
+            editor.focus();
+            updateWordCount(section);
+        }
+
+        // 评分系统
+        function setRating(rating) {
+            currentRating = rating;
+            updateRatingDisplay(rating);
+            updateChart();
+        }
+
+        function updateRatingDisplay(rating) {
+            const stars = document.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+            
+            document.getElementById('ratingValue').textContent = `${rating}分`;
+        }
+
+        // 图表更新
+        function updateChart() {
+            const salesVolume = parseInt(document.getElementById('salesVolume').value) || 0;
+            const conversionRate = parseFloat(document.getElementById('conversionRate').value) || 0;
+            
+            // 更新销量条
+            const salesPercentage = Math.min((salesVolume / 1000) * 100, 100); // 假设1000为满值
+            document.getElementById('salesBar').style.width = `${salesPercentage}%`;
+            document.getElementById('salesValue').textContent = salesVolume;
+            
+            // 更新转化率条
+            document.getElementById('conversionBar').style.width = `${conversionRate}%`;
+            document.getElementById('conversionValue').textContent = `${conversionRate}%`;
+            
+            // 更新评分条
+            const ratingPercentage = (currentRating / 5) * 100;
+            document.getElementById('ratingBar').style.width = `${ratingPercentage}%`;
+            document.getElementById('ratingBarValue').textContent = `${currentRating}分`;
+        }
+
+        // 问题列表管理
+        function addIssue() {
+            const issuesList = document.getElementById('issuesList');
+            
+            const issueItem = document.createElement('div');
+            issueItem.className = 'issue-item';
+            issueItem.innerHTML = `
+                <div class="issue-header">
+                    <select class="priority-select">
+                        <option value="high">高优先级</option>
+                        <option value="medium" selected>中优先级</option>
+                        <option value="low">低优先级</option>
+                    </select>
+                    <button class="remove-issue" onclick="removeIssue(this)">×</button>
+                </div>
+                <div class="issue-content">
+                    <textarea 
+                        class="issue-textarea" 
+                        placeholder="问题描述..."
+                        oninput="updateWordCount('issues')"
+                    ></textarea>
+                    <textarea 
+                        class="issue-textarea" 
+                        placeholder="改进建议..."
+                        oninput="updateWordCount('issues')"
+                    ></textarea>
+                </div>
+            `;
+            
+            issuesList.appendChild(issueItem);
+            
+            // 滚动到新添加的问题
+            issueItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function removeIssue(button) {
+            const issueItem = button.closest('.issue-item');
+            issueItem.remove();
+            updateWordCount('issues');
+        }
+
+        // 数据保存和加载
+        function collectReviewData() {
+            const issues = [];
+            const issueItems = document.querySelectorAll('.issue-item');
+            
+            issueItems.forEach(item => {
+                const priority = item.querySelector('.priority-select').value;
+                const textareas = item.querySelectorAll('.issue-textarea');
+                const description = textareas[0].value.trim();
+                const improvement = textareas[1].value.trim();
+                
+                if (description || improvement) {
+                    issues.push({
+                        priority,
+                        description,
+                        improvement
+                    });
+                }
+            });
+            
+            return {
+                projectId: reviewData.projectId,
+                highlights: document.getElementById('highlightsEditor').value,
+                marketData: {
+                    salesVolume: parseInt(document.getElementById('salesVolume').value) || 0,
+                    conversionRate: parseFloat(document.getElementById('conversionRate').value) || 0,
+                    userRating: currentRating,
+                    userFeedback: document.getElementById('userFeedback').value
+                },
+                issues: issues,
+                lastSaved: new Date().toISOString()
+            };
+        }
+
+        function saveDraftData() {
+            const data = collectReviewData();
+            localStorage.setItem('reviewDraft_' + data.projectId, JSON.stringify(data));
+            
+            // 显示保存提示
+            showAutoSaveIndicator();
+        }
+
+        function loadDraftData() {
+            const savedData = localStorage.getItem('reviewDraft_' + reviewData.projectId);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                
+                // 恢复数据
+                document.getElementById('highlightsEditor').value = data.highlights || '';
+                document.getElementById('salesVolume').value = data.marketData.salesVolume || '';
+                document.getElementById('conversionRate').value = data.marketData.conversionRate || '';
+                document.getElementById('userFeedback').value = data.marketData.userFeedback || '';
+                
+                setRating(data.marketData.userRating || 0);
+                
+                // 恢复问题列表
+                if (data.issues && data.issues.length > 0) {
+                    const issuesList = document.getElementById('issuesList');
+                    issuesList.innerHTML = ''; // 清空默认项
+                    
+                    data.issues.forEach(issue => {
+                        addIssueWithData(issue);
+                    });
+                }
+                
+                updateChart();
+                updateWordCount('highlights');
+                updateWordCount('marketData');
+                updateWordCount('issues');
+                
+                showNotification('已恢复草稿数据', 'info');
+            }
+        }
+
+        function addIssueWithData(issueData) {
+            const issuesList = document.getElementById('issuesList');
+            
+            const issueItem = document.createElement('div');
+            issueItem.className = 'issue-item';
+            issueItem.innerHTML = `
+                <div class="issue-header">
+                    <select class="priority-select">
+                        <option value="high" ${issueData.priority === 'high' ? 'selected' : ''}>高优先级</option>
+                        <option value="medium" ${issueData.priority === 'medium' ? 'selected' : ''}>中优先级</option>
+                        <option value="low" ${issueData.priority === 'low' ? 'selected' : ''}>低优先级</option>
+                    </select>
+                    <button class="remove-issue" onclick="removeIssue(this)">×</button>
+                </div>
+                <div class="issue-content">
+                    <textarea 
+                        class="issue-textarea" 
+                        placeholder="问题描述..."
+                        oninput="updateWordCount('issues')"
+                    >${issueData.description}</textarea>
+                    <textarea 
+                        class="issue-textarea" 
+                        placeholder="改进建议..."
+                        oninput="updateWordCount('issues')"
+                    >${issueData.improvement}</textarea>
+                </div>
+            `;
+            
+            issuesList.appendChild(issueItem);
+        }
+
+        // 保存草稿
+        function saveDraft() {
+            saveDraftData();
+            showNotification('草稿已保存', 'success');
+        }
+
+        // 提交复盘
+        function submitReview() {
+            const data = collectReviewData();
+            
+            // 验证必填项
+            if (!data.highlights.trim()) {
+                showNotification('请填写设计亮点内容', 'error');
+                return;
+            }
+            
+            if (data.issues.length === 0) {
+                showNotification('请至少添加一个问题和改进建议', 'error');
+                return;
+            }
+            
+            // 模拟提交
+            console.log('提交复盘数据:', data);
+            
+            showNotification('复盘提交成功！', 'success');
+            
+            // 清除草稿
+            localStorage.removeItem('reviewDraft_' + data.projectId);
+            
+            // 2秒后跳转
+            setTimeout(() => {
+                goBack();
+            }, 2000);
+        }
+
+        // 返回上一页
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'project-detail.html';
+            }
+        }
+
+        // 显示自动保存指示器
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.classList.add('show');
+            
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // 通知系统
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 6px;
+                color: white;
+                font-size: 14px;
+                z-index: 3000;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            `;
+            
+            const colors = {
+                'success': '#10b981',
+                'error': '#ef4444',
+                'warning': '#f59e0b',
+                'info': '#3b82f6'
+            };
+            
+            notification.style.backgroundColor = colors[type] || colors.info;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S 保存草稿
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveDraft();
+            }
+            
+            // Ctrl/Cmd + Enter 提交
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                submitReview();
+            }
+            
+            // ESC 返回
+            if (e.key === 'Escape') {
+                goBack();
+            }
+        });
+
+        // 页面离开前确认
+        window.addEventListener('beforeunload', function(e) {
+            const data = collectReviewData();
+            const hasContent = data.highlights.trim() || 
+                             data.marketData.userFeedback.trim() || 
+                             data.issues.length > 0;
+            
+            if (hasContent) {
+                const message = '您有未保存的复盘内容，确定要离开吗？';
+                e.returnValue = message;
+                return message;
+            }
+        });
+    </script>
+</body>
+</html>
